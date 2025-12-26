@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../shared/widgets/sound_card.dart';
 import '../../core/models/detected_sound.dart';
+import '../../core/services/haptic_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -36,6 +37,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   ];
 
   void _onSoundTap(DetectedSound sound) {
+    HapticService.vibrate(sound.priority);
     // Show details when user taps a sound
     showModalBottomSheet(
       context: context,
