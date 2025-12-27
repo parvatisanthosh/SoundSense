@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'features/dashboard/dashboard_screen.dart';
+import 'core/services/settings_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize settings
+  await SettingsService().init();
+  
   runApp(const SoundSenseApp());
 }
 

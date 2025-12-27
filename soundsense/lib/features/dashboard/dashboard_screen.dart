@@ -6,6 +6,9 @@ import '../../core/services/haptic_service.dart';
 import '../../core/services/audio_service.dart';
 import '../../core/services/sound_classifier.dart';
 import '../chat/chat_screen.dart';
+import '../transcription/transcription_screen.dart';
+import '../settings/settings_screen.dart';
+import '../../core/services/settings_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -17,6 +20,7 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final AudioService _audioService = AudioService();
   final SoundClassifier _classifier = SoundClassifier();
+  final SettingsService _settings = SettingsService();
   
   bool _isListening = false;
   bool _isModelLoaded = false;
@@ -79,9 +83,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
           final priority = SoundCategory.getPriority(result.label);
           
           // Vibrate for important sounds
-          if (priority == 'critical' || priority == 'important') {
-            HapticService.vibrate(priority);
-          }
+          if (_settings.vibrationEnabled && 
+    (priority == 'critical' || priority == 'important')) {
+  HapticService.vibrate(priority);
+}
+
+// Skip if this sound type is disabled in settings
+if (!_settings.shouldShowSound(priority)) {
+  continue;
+}
 
           // Add to list (avoid duplicates)
           final exists = _detectedSounds.any((s) => s.name == result.label);
@@ -220,6 +230,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: const Color(0xFF16213E),
         centerTitle: true,
         actions: [
+          IconButton(
+    icon: const Icon(Icons.settings, color: Colors.white),
+    onPressed: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const SettingsScreen(),
+        ),
+      );
+    },
+  ),
+          IconButton(
+    icon: const Icon(Icons.subtitles, color: Colors.white),
+    onPressed: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const TranscriptionScreen(),
+        ),
+      );
+    },
+  ),
            IconButton(
     icon: const Icon(Icons.chat, color: Colors.white),
     onPressed: () {

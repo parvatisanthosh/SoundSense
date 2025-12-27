@@ -40,6 +40,8 @@ dependencies:
   tflite_flutter: ^0.11.0
   audio_streamer: ^4.2.2
   http: ^1.2.1
+  shared_preferences: ^2.2.2
+  
   
 
 dev_dependencies:
