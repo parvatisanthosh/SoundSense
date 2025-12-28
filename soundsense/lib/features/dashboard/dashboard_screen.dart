@@ -9,6 +9,12 @@ import '../chat/chat_screen.dart';
 import '../transcription/transcription_screen.dart';
 import '../settings/settings_screen.dart';
 import '../../core/services/settings_service.dart';
+import 'package:lottie/lottie.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import '../../shared/widgets/sound_animation.dart';
+import '../../shared/widgets/critical_alerts.dart';
+import '../../core/services/animation_service.dart';
+import '../../shared/widgets/sound_grid.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -27,6 +33,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   double _currentDecibel = 0;
   List<DetectedSound> _detectedSounds = [];
   List<double> _audioBuffer = [];
+  DetectedSound? _currentSound;  // Currently displayed sound
+bool _showCriticalAlert = false;
 
   @override
   void initState() {
@@ -65,55 +73,55 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     };
   }
+Future<void> _classifyAudio() async {
+  if (!_isModelLoaded || _audioBuffer.length < 15600) return;
 
-  Future<void> _classifyAudio() async {
-    if (!_isModelLoaded || _audioBuffer.length < 15600) return;
+  final samples = _audioBuffer.sublist(0, 15600);
+  _audioBuffer = _audioBuffer.sublist(15600);
 
-    // Take 15600 samples for classification
-    final samples = _audioBuffer.sublist(0, 15600);
-    _audioBuffer = _audioBuffer.sublist(15600);
+  final results = await _classifier.classify(samples);
 
-    // Run AI classification
-    final results = await _classifier.classify(samples);
+  if (results.isNotEmpty) {
+    for (var result in results) {
+      final priority = SoundCategory.getPriority(result.label);
 
-    if (results.isNotEmpty) {
+      // Skip if disabled in settings
+      if (!_settings.shouldShowSound(priority)) continue;
+
+      // Vibrate if enabled
+      if (_settings.vibrationEnabled &&
+          (priority == 'critical' || priority == 'important')) {
+        HapticService.vibrate(priority);
+      }
+
+      // Check for duplicates
+      final exists = _detectedSounds.any((s) => s.name == result.label);
+      if (exists) continue;
+
+      final newSound = DetectedSound(
+        name: result.label,
+        category: _getCategoryForSound(result.label),
+        confidence: result.confidence,
+        timestamp: DateTime.now(),
+        priority: priority,
+      );
+
       setState(() {
-        // Add new detected sounds
-        for (var result in results) {
-          final priority = SoundCategory.getPriority(result.label);
-          
-          // Vibrate for important sounds
-          if (_settings.vibrationEnabled && 
-    (priority == 'critical' || priority == 'important')) {
-  HapticService.vibrate(priority);
-}
+        _detectedSounds.insert(0, newSound);
+        _currentSound = newSound;
 
-// Skip if this sound type is disabled in settings
-if (!_settings.shouldShowSound(priority)) {
-  continue;
-}
-
-          // Add to list (avoid duplicates)
-          final exists = _detectedSounds.any((s) => s.name == result.label);
-          if (!exists) {
-            _detectedSounds.insert(0, DetectedSound(
-              name: result.label,
-              category: _getCategoryForSound(result.label),
-              confidence: result.confidence,
-              timestamp: DateTime.now(),
-              priority: priority,
-            ));
-          }
+        // Show critical alert for dangerous sounds
+        if (AnimationService.isCriticalAlert(result.label)) {
+          _showCriticalAlert = true;
         }
 
-        // Keep only last 10 sounds
         if (_detectedSounds.length > 10) {
           _detectedSounds = _detectedSounds.sublist(0, 10);
         }
       });
     }
   }
-
+}
   String _getCategoryForSound(String soundName) {
     final lower = soundName.toLowerCase();
     if (lower.contains('car') || lower.contains('horn') || lower.contains('siren')) {
@@ -219,227 +227,278 @@ if (!_settings.shouldShowSound(priority)) {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF1A1A2E),
-      appBar: AppBar(
-        title: const Text(
-          'SoundSense',
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        backgroundColor: const Color(0xFF16213E),
-        centerTitle: true,
-        actions: [
-          IconButton(
-    icon: const Icon(Icons.settings, color: Colors.white),
-    onPressed: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const SettingsScreen(),
-        ),
-      );
-    },
-  ),
-          IconButton(
-    icon: const Icon(Icons.subtitles, color: Colors.white),
-    onPressed: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const TranscriptionScreen(),
-        ),
-      );
-    },
-  ),
-           IconButton(
-    icon: const Icon(Icons.chat, color: Colors.white),
-    onPressed: () {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ChatScreen(
-            recentSounds: _detectedSounds.map((s) => s.name).toList(),
-          ),
-        ),
-      );
-    },
-  ),
-          // AI Status indicator
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Icon(
-              _isModelLoaded ? Icons.psychology : Icons.psychology_outlined,
-              color: _isModelLoaded ? const Color(0xFF2ED573) : Colors.grey,
-            ),
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Listening Status & Audio Level
-          Container(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                // AI Status
-                if (!_isModelLoaded)
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    margin: const EdgeInsets.only(bottom: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Loading AI Model...',
-                          style: TextStyle(color: Colors.orange),
-                        ),
-                      ],
-                    ),
-                  ),
-                
-                // Status
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 12,
-                      height: 12,
-                      decoration: BoxDecoration(
-                        color: _isListening
-                            ? const Color(0xFF2ED573)
-                            : Colors.grey,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _isListening ? 'Listening...' : 'Not Listening',
-                      style: const TextStyle(color: Colors.white, fontSize: 18),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                
-                // Decibel Display
-                if (_isListening) ...[
-                  Text(
-                    '${_currentDecibel.toStringAsFixed(1)} dB',
-                    style: TextStyle(
-                      color: _getDecibelColor(),
-                      fontSize: 48,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Container(
-                    width: double.infinity,
-                    height: 10,
-                    margin: const EdgeInsets.symmetric(horizontal: 40),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[800],
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: FractionallySizedBox(
-                      alignment: Alignment.centerLeft,
-                      widthFactor: (_currentDecibel / 100).clamp(0.0, 1.0),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: _getDecibelColor(),
-                          borderRadius: BorderRadius.circular(5),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-                
-                // Toggle Button
-                GestureDetector(
-                  onTap: _toggleListening,
-                  child: Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _isListening
-                          ? const Color(0xFFFF4757)
-                          : const Color(0xFF2ED573),
-                    ),
-                    child: Icon(
-                      _isListening ? Icons.mic_off : Icons.mic,
-                      color: Colors.white,
-                      size: 36,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          
-          // Detected Sounds Header
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                const Text(
-                  'Detected Sounds',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const Spacer(),
-                if (_detectedSounds.isNotEmpty)
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _detectedSounds.clear();
-                      });
-                    },
-                    child: const Text('Clear All'),
-                  ),
-              ],
-            ),
-          ),
-          
-          // Sound Cards List
-          Expanded(
-            child: _detectedSounds.isEmpty
-                ? Center(
-                    child: Text(
-                      _isListening 
-                          ? 'Listening for sounds...' 
-                          : 'Tap mic to start',
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                  )
-                : ListView.builder(
-                    itemCount: _detectedSounds.length,
-                    itemBuilder: (context, index) {
-                      final sound = _detectedSounds[index];
-                      return SoundCard(
-                        soundName: sound.name,
-                        priority: sound.priority,
-                        confidence: sound.confidence,
-                        onTap: () => _onSoundTap(sound),
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
+Widget build(BuildContext context) {
+  // Show critical alert if needed
+  if (_showCriticalAlert && _currentSound != null) {
+    return CriticalAlert(
+      soundName: _currentSound!.name,
+      confidence: _currentSound!.confidence,
+      onDismiss: () {
+        setState(() {
+          _showCriticalAlert = false;
+        });
+      },
     );
   }
+
+  return Scaffold(
+    backgroundColor: const Color(0xFF1A1A2E),
+    appBar: AppBar(
+      title: const Text(
+        'SoundSense',
+        style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+      ),
+      backgroundColor: const Color(0xFF16213E),
+      centerTitle: true,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.settings, color: Colors.white),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const SettingsScreen(),
+              ),
+            );
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.subtitles, color: Colors.white),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const TranscriptionScreen(),
+              ),
+            );
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.chat, color: Colors.white),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ChatScreen(
+                  recentSounds: _detectedSounds.map((s) => s.name).toList(),
+                ),
+              ),
+            );
+          },
+        ),
+        Padding(
+          padding: const EdgeInsets.only(right: 16),
+          child: Icon(
+            _isModelLoaded ? Icons.psychology : Icons.psychology_outlined,
+            color: _isModelLoaded ? const Color(0xFF2ED573) : Colors.grey,
+          ),
+        ),
+      ],
+    ),
+    body: Column(
+      children: [
+        // Status & Controls
+        Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              // AI Loading indicator
+              if (!_isModelLoaded)
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  margin: const EdgeInsets.only(bottom: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Loading AI Model...',
+                        style: TextStyle(color: Colors.orange),
+                      ),
+                    ],
+                  ),
+                ),
+
+              // Listening Status
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: _isListening
+                          ? const Color(0xFF2ED573)
+                          : Colors.grey,
+                      shape: BoxShape.circle,
+                    ),
+                  ).animate(target: _isListening ? 1 : 0)
+                      .scale(begin: const Offset(1, 1), end: const Offset(1.2, 1.2))
+                      .then()
+                      .scale(begin: const Offset(1.2, 1.2), end: const Offset(1, 1)),
+                  const SizedBox(width: 8),
+                  Text(
+                    _isListening ? 'Listening...' : 'Not Listening',
+                    style: const TextStyle(color: Colors.white, fontSize: 18),
+                  ),
+                ],
+              ),
+              
+              const SizedBox(height: 16),
+
+              // Decibel Display
+              if (_isListening) ...[
+                Text(
+                  '${_currentDecibel.toStringAsFixed(1)} dB',
+                  style: TextStyle(
+                    color: _getDecibelColor(),
+                    fontSize: 42,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ).animate().fadeIn(),
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  height: 8,
+                  margin: const EdgeInsets.symmetric(horizontal: 40),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[800],
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: FractionallySizedBox(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: (_currentDecibel / 100).clamp(0.0, 1.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: _getDecibelColor(),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+
+              // Mic Button with animation
+              GestureDetector(
+                onTap: _toggleListening,
+                child: Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _isListening
+                        ? const Color(0xFFFF4757)
+                        : const Color(0xFF2ED573),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (_isListening
+                                ? const Color(0xFFFF4757)
+                                : const Color(0xFF2ED573))
+                            .withOpacity(0.4),
+                        blurRadius: 20,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    _isListening ? Icons.mic_off : Icons.mic,
+                    color: Colors.white,
+                    size: 36,
+                  ),
+                ).animate(target: _isListening ? 1 : 0)
+                    .scale(begin: const Offset(1, 1), end: const Offset(1.1, 1.1))
+                    .then()
+                    .scale(begin: const Offset(1.1, 1.1), end: const Offset(1, 1)),
+              ),
+            ],
+          ),
+        ),
+
+        // Current Sound Animation (if any)
+      // Current Sound Animation (if any)
+if (_detectedSounds.isNotEmpty && _isListening)
+  SoundGrid(
+    sounds: _detectedSounds,
+    onSoundTap: _onSoundTap,
+  ),
+
+        // Sound History Header
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              const Text(
+                'Recent Sounds',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const Spacer(),
+              if (_detectedSounds.isNotEmpty)
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _detectedSounds.clear();
+                      _currentSound = null;
+                    });
+                  },
+                  child: const Text('Clear'),
+                ),
+            ],
+          ),
+        ),
+
+        // Sound Cards List
+        Expanded(
+          child: _detectedSounds.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.hearing,
+                        size: 48,
+                        color: Colors.grey[700],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        _isListening
+                            ? 'Listening for sounds...'
+                            : 'Tap mic to start',
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  itemCount: _detectedSounds.length,
+                  itemBuilder: (context, index) {
+                    final sound = _detectedSounds[index];
+                    return SoundCard(
+                      soundName: sound.name,
+                      priority: sound.priority,
+                      confidence: sound.confidence,
+                      onTap: () => _onSoundTap(sound),
+                    ).animate().fadeIn(delay: Duration(milliseconds: index * 100))
+                        .slideX(begin: 0.2);
+                  },
+                ),
+        ),
+      ],
+    ),
+  );
+}
 }
