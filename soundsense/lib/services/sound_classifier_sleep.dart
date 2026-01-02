@@ -52,19 +52,26 @@ class SoundClassifierSleep {
       _interpreter!.run(input, output);
 
       // Find the label with the highest probability
+      // Find the label with the highest probability
       double maxProb = 0.0;
       int maxIndex = -1;
       final probabilities = output[0];
       
+      // Debug print all non-zero probs
       for (int i = 0; i < probabilities.length; i++) {
+        if (probabilities[i] > 0.1) {
+           print("  Label: ${_labels![i]}, Prob: ${probabilities[i]}");
+        }
         if (probabilities[i] > maxProb) {
           maxProb = probabilities[i];
           maxIndex = i;
         }
       }
 
-      // Threshold for "critical" detection
-      if (maxProb > 0.7 && maxIndex != -1) {
+      print("Top detection: ${maxIndex != -1 ? _labels![maxIndex] : 'None'} ($maxProb)");
+
+      // Lower threshold for testing
+      if (maxProb > 0.35 && maxIndex != -1) {
         return _labels![maxIndex];
       }
       

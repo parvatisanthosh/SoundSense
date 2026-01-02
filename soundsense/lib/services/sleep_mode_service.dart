@@ -32,6 +32,15 @@ class SleepModeService {
       android: initializationSettingsAndroid,
     );
      await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+
+     // Request permissions for Android 13+
+     final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
+        flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>();
+            
+    if (androidImplementation != null) {
+      await androidImplementation.requestNotificationsPermission();
+    }
   }
 
   Future<void> startMonitoring() async {
