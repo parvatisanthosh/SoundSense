@@ -1,0 +1,4 @@
+fire_alarm
+break_in
+baby_cry
+smoke_detector

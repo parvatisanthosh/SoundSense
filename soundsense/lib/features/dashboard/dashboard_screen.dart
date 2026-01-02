@@ -252,6 +252,13 @@ Widget build(BuildContext context) {
       centerTitle: true,
       actions: [
         IconButton(
+          icon: const Icon(Icons.shield_moon, color: Colors.white),
+          tooltip: 'Sleep Mode',
+          onPressed: () {
+            Navigator.pushNamed(context, '/sleep_mode');
+          },
+        ),
+        IconButton(
           icon: const Icon(Icons.settings, color: Colors.white),
           onPressed: () {
             Navigator.push(
