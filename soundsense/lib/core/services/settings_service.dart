@@ -1,4 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'tts_alert_service.dart';
 
 class SettingsService {
   static const String _criticalAlertsKey = 'critical_alerts';
@@ -23,21 +24,39 @@ class SettingsService {
   String vibrationIntensity = 'Medium';
   double sensitivity = 0.5;
 
+  bool _ttsEnabled = true;
+
+bool get ttsEnabled => _ttsEnabled;
+
+Future<void> setTTSEnabled(bool value) async {
+  _ttsEnabled = value;
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setBool('tts_enabled', value);
+  TTSAlertService.instance.setEnabled(value);
+}
+
   // Initialize
   Future<void> init() async {
+    
     _prefs = await SharedPreferences.getInstance();
     await _loadSettings();
+    
   }
 
   // Load all settings
-  Future<void> _loadSettings() async {
-    criticalAlerts = _prefs?.getBool(_criticalAlertsKey) ?? true;
-    importantAlerts = _prefs?.getBool(_importantAlertsKey) ?? true;
-    normalAlerts = _prefs?.getBool(_normalAlertsKey) ?? false;
-    vibrationEnabled = _prefs?.getBool(_vibrationEnabledKey) ?? true;
-    vibrationIntensity = _prefs?.getString(_vibrationIntensityKey) ?? 'Medium';
-    sensitivity = _prefs?.getDouble(_sensitivityKey) ?? 0.5;
-  }
+  // Load all settings
+Future<void> _loadSettings() async {
+  criticalAlerts = _prefs?.getBool(_criticalAlertsKey) ?? true;
+  importantAlerts = _prefs?.getBool(_importantAlertsKey) ?? true;
+  normalAlerts = _prefs?.getBool(_normalAlertsKey) ?? false;
+  vibrationEnabled = _prefs?.getBool(_vibrationEnabledKey) ?? true;
+  vibrationIntensity = _prefs?.getString(_vibrationIntensityKey) ?? 'Medium';
+  sensitivity = _prefs?.getDouble(_sensitivityKey) ?? 0.5;
+  
+  // Load TTS setting
+  _ttsEnabled = _prefs?.getBool('tts_enabled') ?? true;
+  TTSAlertService.instance.setEnabled(_ttsEnabled);
+}
 
   // Save individual settings
   Future<void> setCriticalAlerts(bool value) async {

@@ -471,7 +471,12 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen> {
     });
   }
 Future<void> _startRecording() async {
-  if (_isRecording || _currentProfileId == null) return;
+  print('🎤 _startRecording called');
+  
+  if (_isRecording || _currentProfileId == null) {
+    print('❌ Cannot start: isRecording=$_isRecording, profileId=$_currentProfileId');
+    return;
+  }
 
   if (!await _audioRecorder.hasPermission()) {
     _showSnackbar('Microphone permission denied');
@@ -479,35 +484,40 @@ Future<void> _startRecording() async {
   }
 
   try {
-    // Get proper temp directory using path_provider
-    final tempDir = await getTemporaryDirectory();
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final filePath = '${tempDir.path}/voice_$timestamp.wav';
-    
-    print('🎤 Recording to: $filePath');
+    print('🎤 Starting stream recording...');
 
     setState(() {
       _isRecording = true;
       _recordingSeconds = 0;
     });
 
-    await _audioRecorder.start(
-       RecordConfig(
-        encoder: AudioEncoder.wav,
+    // Use stream instead of file - collect audio data in memory
+    final stream = await _audioRecorder.startStream(
+      const RecordConfig(
+        encoder: AudioEncoder.pcm16bits,
         sampleRate: 16000,
         numChannels: 1,
       ),
-      path: filePath,
     );
+    
+    print('✅ Stream started!');
 
-    _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    // Collect audio data
+    final List<int> audioBytes = [];
+    
+    stream.listen((data) {
+      audioBytes.addAll(data);
+    });
+
+    _recordingTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       setState(() {
         _recordingSeconds++;
         _enrollmentProgress = _recordingSeconds / _targetSeconds;
       });
 
       if (_recordingSeconds >= _targetSeconds) {
-        _stopRecording();
+        timer.cancel();
+        await _stopStreamRecording(audioBytes);
       }
     });
   } catch (e) {
@@ -517,62 +527,60 @@ Future<void> _startRecording() async {
   }
 }
 
-  Future<void> _stopRecording() async {
-    _recordingTimer?.cancel();
-    
-    final path = await _audioRecorder.stop();
-    setState(() => _isRecording = false);
+Future<void> _stopStreamRecording(List<int> audioBytes) async {
+  print('🎤 Stopping stream recording...');
+  
+  await _audioRecorder.stop();
+  setState(() => _isRecording = false);
 
-    if (path == null || _currentProfileId == null) {
-      print('❌ Path is null or no profile ID');
-      _showSnackbar('Recording failed');
-      return;
-    }
-
-    setState(() {
-      _statusMessage = 'Enrolling voice with Azure...';
-      _isProcessing = true;
-    });
-
-    try {
-      final file = File(path);
-      final exists = await file.exists();
-    print('📁 File exists: $exists');
-
-    if (!exists) {
-      print('❌ File does not exist!');
-      _showSnackbar('Recording file not found');
-      return;
-    }
-      final audioData = await file.readAsBytes();
-
-      final result = await _speakerService.enrollVoiceProfile(
-        _currentProfileId!,
-        audioData,
-      );
-
-      setState(() {
-        _isProcessing = false;
-        if (result.isEnrolled) {
-          _isEnrolled = true;
-          _enrollmentProgress = 1.0;
-          _statusMessage = '✅ Voice enrolled successfully!';
-          _showSnackbar('Voice profile saved! 🎉');
-        } else if (result.success) {
-          _statusMessage = 'Need ${result.remainingSeconds.round()}s more audio';
-          _showSnackbar('Record more audio');
-        } else {
-          _statusMessage = 'Error: ${result.message}';
-        }
-      });
-    } catch (e) {
-      setState(() {
-        _isProcessing = false;
-        _statusMessage = 'Error: $e';
-      });
-    }
+  if (_currentProfileId == null) {
+    print('❌ No profile ID');
+    _showSnackbar('Recording failed');
+    return;
   }
 
+  print('📁 Collected ${audioBytes.length} bytes of audio');
+
+  setState(() {
+    _statusMessage = 'Enrolling voice with Azure...';
+    _isProcessing = true;
+  });
+
+  try {
+    final audioData = Uint8List.fromList(audioBytes);
+    print('📁 Audio size: ${audioData.length} bytes');
+
+    final result = await _speakerService.enrollVoiceProfile(
+      _currentProfileId!,
+      audioData,
+    );
+
+    setState(() {
+      _isProcessing = false;
+      if (result.isEnrolled) {
+        _isEnrolled = true;
+        _enrollmentProgress = 1.0;
+        _statusMessage = '✅ Voice enrolled successfully!';
+        _showSnackbar('Voice profile saved! 🎉');
+      } else if (result.success) {
+        _statusMessage = 'Need ${result.remainingSeconds.round()}s more audio';
+        _showSnackbar('Record more audio');
+      } else {
+        _statusMessage = 'Error: ${result.message}';
+      }
+    });
+  } catch (e) {
+    print('❌ Error processing recording: $e');
+    setState(() {
+      _isProcessing = false;
+      _statusMessage = 'Error: $e';
+    });
+  }
+}
+
+Future<void> _stopRecording() async {
+  
+}
   void _cancelTraining() async {
     if (_currentProfileId != null) {
       await _speakerService.deleteVoiceProfile(_currentProfileId!);
