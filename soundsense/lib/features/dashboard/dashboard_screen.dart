@@ -363,7 +363,6 @@ Widget build(BuildContext context) {
     },
   ),
         IconButton(
-<<<<<<< HEAD
           icon: const Icon(Icons.shield_moon, color: Colors.white),
           tooltip: 'Sleep Mode',
           onPressed: () {
@@ -371,9 +370,6 @@ Widget build(BuildContext context) {
           },
         ),
         IconButton(
-=======
-          
->>>>>>> fef6c9111f5b0219a3bf458ee8b08b194a5499b7
           icon: const Icon(Icons.settings, color: Colors.white),
           onPressed: () {
             Navigator.push(
