@@ -16,7 +16,6 @@ import '../training/sound_training_screen.dart';
 import '../transcription/enhanced_transcription_screen.dart';
 import '../../core/services/custom_sound_service.dart';
 import 'dart:typed_data';
-import '../../core/services/training_database.dart';
 import '../training/azure_voice_training_screen.dart';
 import '../../core/services/tts_alert_service.dart';
 
@@ -52,7 +51,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _checkCustomSounds() async {
     final customSoundService = CustomSoundService.instance;
     await customSoundService.initialize();
-    
     print('🔊 Custom sounds saved: ${customSoundService.customSounds.length}');
   }
 
@@ -139,9 +137,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
           priority: priority,
         );
 
-        // TTS Alert for important sounds
-        // TTS Alert for ALL sounds (for testing)
-TTSAlertService.instance.speakAlert(result.label, priority: priority);
+        // TTS Alert for ALL sounds
+        TTSAlertService.instance.speakAlert(result.label, priority: priority);
 
         setState(() {
           _detectedSounds.insert(0, newSound);
@@ -319,6 +316,7 @@ TTSAlertService.instance.speakAlert(result.label, priority: priority);
 
   @override
   Widget build(BuildContext context) {
+    // Show critical alert if needed
     if (_showCriticalAlert && _currentSound != null) {
       return CriticalAlert(
         soundName: _currentSound!.name,
@@ -341,6 +339,15 @@ TTSAlertService.instance.speakAlert(result.label, priority: priority);
         backgroundColor: const Color(0xFF16213E),
         centerTitle: true,
         actions: [
+          // Sleep Mode (Friend's feature)
+          IconButton(
+            icon: const Icon(Icons.shield_moon, color: Colors.white),
+            tooltip: 'Sleep Mode',
+            onPressed: () {
+              Navigator.pushNamed(context, '/sleep_mode');
+            },
+          ),
+          // Settings
           IconButton(
             icon: const Icon(Icons.settings, color: Colors.white),
             onPressed: () {
@@ -350,6 +357,7 @@ TTSAlertService.instance.speakAlert(result.label, priority: priority);
               );
             },
           ),
+          // Chat
           IconButton(
             icon: const Icon(Icons.chat, color: Colors.white),
             onPressed: () {
@@ -363,6 +371,7 @@ TTSAlertService.instance.speakAlert(result.label, priority: priority);
               );
             },
           ),
+          // AI Status
           Padding(
             padding: const EdgeInsets.only(right: 16),
             child: Icon(
@@ -498,65 +507,79 @@ TTSAlertService.instance.speakAlert(result.label, priority: priority);
                 const SizedBox(height: 24),
 
                 // Feature Cards Row
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Train Sounds
-                    _buildFeatureCard(
-                      icon: Icons.music_note,
-                      label: 'Train\nSounds',
-                      color: Colors.purple,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const SoundTrainingScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 10),
-                    
-                    // Voice Profiles
-                    _buildFeatureCard(
-                      icon: Icons.person_add,
-                      label: 'Voice\nProfiles',
-                      color: Colors.orange,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const AzureVoiceTrainingScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 10),
-                    
-                    // Test TTS - NEW!
-                    _buildFeatureCard(
-                      icon: Icons.volume_up,
-                      label: 'Test\nTTS',
-                      color: Colors.green,
-                      onTap: _testTTS,
-                    ),
-                    const SizedBox(width: 10),
-                    
-                    // Live Captions
-                    _buildFeatureCard(
-                      icon: Icons.closed_caption,
-                      label: 'Live\nCaptions',
-                      color: Colors.cyan,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const EnhancedTranscriptionScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Train Sounds
+                      _buildFeatureCard(
+                        icon: Icons.music_note,
+                        label: 'Train\nSounds',
+                        color: Colors.purple,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const SoundTrainingScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 10),
+                      
+                      // Voice Profiles
+                      _buildFeatureCard(
+                        icon: Icons.person_add,
+                        label: 'Voice\nProfiles',
+                        color: Colors.orange,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const AzureVoiceTrainingScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(width: 10),
+                      
+                      // Sleep Mode (Friend's feature)
+                      _buildFeatureCard(
+                        icon: Icons.shield_moon,
+                        label: 'Sleep\nMode',
+                        color: Colors.indigo,
+                        onTap: () {
+                          Navigator.pushNamed(context, '/sleep_mode');
+                        },
+                      ),
+                      const SizedBox(width: 10),
+                      
+                      // Test TTS
+                      _buildFeatureCard(
+                        icon: Icons.volume_up,
+                        label: 'Test\nTTS',
+                        color: Colors.green,
+                        onTap: _testTTS,
+                      ),
+                      const SizedBox(width: 10),
+                      
+                      // Live Captions
+                      _buildFeatureCard(
+                        icon: Icons.closed_caption,
+                        label: 'Live\nCaptions',
+                        color: Colors.cyan,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const EnhancedTranscriptionScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
