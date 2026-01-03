@@ -6,9 +6,12 @@ import 'screens/splash_screen.dart';
 import 'features/training/sound_training_screen.dart';
 import 'features/training/azure_voice_training_screen.dart';
 import 'features/transcription/enhanced_transcription_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
+   
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   await SettingsService().init();
   runApp(const SoundSenseApp());
 }
