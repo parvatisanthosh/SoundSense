@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'features/dashboard/dashboard_screen.dart';
 import 'core/services/settings_service.dart';
 import 'screens/sleep_mode_screen.dart';
+import 'screens/splash_screen.dart';
 import 'features/training/sound_training_screen.dart';
 import 'features/training/azure_voice_training_screen.dart';
 import 'features/transcription/enhanced_transcription_screen.dart';
@@ -25,8 +26,9 @@ class SoundSenseApp extends StatelessWidget {
         primaryColor: const Color(0xFF00D9FF),
         scaffoldBackgroundColor: const Color(0xFF1A1A2E),
       ),
-      initialRoute: '/',
+      initialRoute: '/splash',
       routes: {
+        '/splash': (context) => const SplashScreen(),
         '/': (context) => const DashboardScreen(),
         '/sleep_mode': (context) => const SleepModeScreen(),
         '/transcription': (context) => const EnhancedTranscriptionScreen(),

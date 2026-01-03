@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:glassmorphism/glassmorphism.dart';
 import '../models/sleep_mode_settings.dart';
 import '../services/sleep_mode_service.dart';
 
@@ -11,6 +10,7 @@ class SleepModeScreen extends StatefulWidget {
 }
 
 class _SleepModeScreenState extends State<SleepModeScreen> with SingleTickerProviderStateMixin {
+  // ALL ORIGINAL STATE - EXACTLY THE SAME
   bool _isActive = false;
   SleepModeSettings _settings = SleepModeSettings();
   final SleepModeService _service = SleepModeService();
@@ -56,195 +56,375 @@ class _SleepModeScreenState extends State<SleepModeScreen> with SingleTickerProv
     super.dispose();
   }
 
+  // ============================================================
+  // NEW MODERN UI
+  // ============================================================
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      extendBodyBehindAppBar: true,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        title: const Text("Sleep Mode"),
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364)],
-          ),
+      backgroundColor: const Color(0xFF0F1419),
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildHeader(),
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    const SizedBox(height: 40),
+                    _buildActivationButton(),
+                    const SizedBox(height: 60),
+                    _buildSettingsCard(),
+                    const SizedBox(height: 100),
+                  ],
+                ),
+              ),
+            ),
+            _buildBottomNav(),
+          ],
         ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              const SizedBox(height: 20),
-              // Status Indicator
-              Center(
-                child: GestureDetector(
-                  onTap: _toggleSleepMode,
-                  child: AnimatedBuilder(
-                    animation: _pulseController,
-                    builder: (context, child) {
-                      return Container(
-                        height: 200,
-                        width: 200,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: _isActive 
-                              ? Colors.greenAccent.withOpacity(0.2) 
-                              : Colors.grey.withOpacity(0.1),
-                          boxShadow: _isActive 
-                              ? [
-                                  BoxShadow(
-                                    color: Colors.greenAccent.withOpacity(0.3 * _pulseController.value),
-                                    blurRadius: 20 + (10 * _pulseController.value),
-                                    spreadRadius: 5 + (5 * _pulseController.value),
-                                  )
-                                ]
-                              : [],
-                        ),
-                        child: Center(
-                          child: Icon(
-                            _isActive ? Icons.shield_moon : Icons.power_settings_new,
-                            size: 80,
-                            color: _isActive ? Colors.greenAccent : Colors.white54,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: const BoxDecoration(
+                color: Color(0xFF1A2632),
+                shape: BoxShape.circle,
               ),
-              const SizedBox(height: 10),
-              Text(
-                _isActive ? "Sleep Mode Active" : "Tap to Activate",
-                style: TextStyle(
-                  color: _isActive ? Colors.greenAccent : Colors.white70,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+              child: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+            ),
+          ),
+          const SizedBox(width: 16),
+          const Text(
+            'Sleep Guardian',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivationButton() {
+    return GestureDetector(
+      onTap: _toggleSleepMode,
+      child: AnimatedBuilder(
+        animation: _pulseController,
+        builder: (context, child) {
+          return Container(
+            width: 200,
+            height: 200,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: _isActive 
+                  ? const Color(0xFF1A2632).withOpacity(0.5)
+                  : const Color(0xFF1A2632),
+              border: Border.all(
+                color: _isActive 
+                    ? Color.lerp(
+                        const Color(0xFF4A9FFF).withOpacity(0.3),
+                        const Color(0xFF4A9FFF).withOpacity(0.6),
+                        _pulseController.value,
+                      )!
+                    : const Color(0xFF2A3F54),
+                width: 2,
               ),
-              const SizedBox(height: 30),
-              
-              // Settings Section
-              Expanded(
-                child: GlassmorphicContainer(
-                  width: double.infinity,
-                  height: double.infinity,
-                  borderRadius: 20,
-                  blur: 20,
-                  alignment: Alignment.bottomCenter,
-                  border: 2,
-                  linearGradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.white.withOpacity(0.1),
-                        Colors.white.withOpacity(0.05),
-                      ],
-                      stops: const [0.1, 1],
-                  ),
-                  borderGradient: LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [
-                      Colors.white.withOpacity(0.5),
-                      Colors.white.withOpacity(0.5),
-                    ],
-                  ),
-                  child: ListView(
-                    padding: const EdgeInsets.all(20),
-                    children: [
-                      const Text(
-                        "Wake Methods",
-                        style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 10),
-                      _buildSwitchTile(
-                        "Phone Flash", 
-                        "Blinks camera light rapidly",
-                        _settings.flashEnabled, 
-                        (val) {
-                          setState(() => _settings.flashEnabled = val);
-                          _saveSettings();
-                        }
-                      ),
-                      _buildSwitchTile(
-                        "Vibration", 
-                        "Maximum vibration pattern",
-                        _settings.vibrationEnabled, 
-                        (val) {
-                          setState(() => _settings.vibrationEnabled = val);
-                          _saveSettings();
-                        }
-                      ),
-                      
-                      const SizedBox(height: 20),
-                      const Text(
-                        "Critical Sounds",
-                        style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
-                        children: [
-                          _buildSoundChip("Fire Alarm", 'fire_alarm'),
-                          _buildSoundChip("Baby Cry", 'baby_cry'),
-                          _buildSoundChip("Glass Break", 'break_in'),
-                          _buildSoundChip("Smoke Detector", 'smoke_detector'),
-                        ],
-                      ),
-                      
-                      const SizedBox(height: 20),
-                      ElevatedButton(
-                        onPressed: () {
-                           _service.triggerTestAlert();
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white.withOpacity(0.1),
-                        ),
-                        child: const Text("Test Alert", style: TextStyle(color: Colors.white)),
+              boxShadow: _isActive
+                  ? [
+                      BoxShadow(
+                        color: const Color(0xFF4A9FFF).withOpacity(0.2 * _pulseController.value),
+                        blurRadius: 30 + (20 * _pulseController.value),
+                        spreadRadius: 5 + (5 * _pulseController.value),
                       )
-                    ],
+                    ]
+                  : [],
+            ),
+            child: Center(
+              child: Icon(
+                Icons.power_settings_new,
+                size: 80,
+                color: _isActive ? const Color(0xFF4A9FFF) : const Color(0xFF9DABB9),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildSettingsCard() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A2632),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Wake Methods',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 20),
+          
+          // Phone Flash Toggle
+          _buildModernToggle(
+            title: 'Phone Flash',
+            subtitle: 'Blinks camera light rapidly',
+            value: _settings.flashEnabled,
+            onChanged: (val) {
+              setState(() => _settings.flashEnabled = val);
+              _saveSettings();
+            },
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // Vibration Toggle
+          _buildModernToggle(
+            title: 'Vibration',
+            subtitle: 'Maximum vibration pattern',
+            value: _settings.vibrationEnabled,
+            onChanged: (val) {
+              setState(() => _settings.vibrationEnabled = val);
+              _saveSettings();
+            },
+          ),
+          
+          const SizedBox(height: 32),
+          
+          // Critical Sounds Section
+          const Text(
+            'Critical Sounds',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _buildSoundChip('Fire Alarm', 'fire_alarm'),
+              _buildSoundChip('Baby Cry', 'baby_cry'),
+              _buildSoundChip('Glass Break', 'break_in'),
+              _buildSoundChip('Smoke Detector', 'smoke_detector'),
+            ],
+          ),
+          
+          const SizedBox(height: 24),
+          
+          // Test Alert Button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                _service.triggerTestAlert();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Test alert triggered'),
+                    backgroundColor: Color(0xFF4A9FFF),
+                    behavior: SnackBarBehavior.floating,
                   ),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0F1419),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: const BorderSide(color: Color(0xFF2A3F54)),
+                ),
+              ),
+              child: const Text(
+                'Test Alert',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModernToggle({
+    required String title,
+    required String subtitle,
+    required bool value,
+    required Function(bool) onChanged,
+  }) {
+    return Row(
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.5),
+                  fontSize: 14,
                 ),
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildSwitchTile(String title, String subtitle, bool value, Function(bool) onChanged) {
-    return SwitchListTile(
-      title: Text(title, style: const TextStyle(color: Colors.white)),
-      subtitle: Text(subtitle, style: TextStyle(color: Colors.white.withOpacity(0.6))),
-      value: value,
-      activeColor: Colors.greenAccent,
-      onChanged: onChanged,
+        GestureDetector(
+          onTap: () => onChanged(!value),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: 56,
+            height: 32,
+            decoration: BoxDecoration(
+              color: value ? const Color(0xFF4A9FFF) : const Color(0xFF2A3F54),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: AnimatedAlign(
+              duration: const Duration(milliseconds: 200),
+              alignment: value ? Alignment.centerRight : Alignment.centerLeft,
+              child: Container(
+                width: 28,
+                height: 28,
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: value
+                    ? const Icon(Icons.check, color: Color(0xFF4A9FFF), size: 16)
+                    : null,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildSoundChip(String label, String key) {
     final isSelected = _settings.criticalSounds.contains(key);
-    return FilterChip(
-      label: Text(label),
-      selected: isSelected,
-      selectedColor: Colors.blueAccent.withOpacity(0.3),
-      checkmarkColor: Colors.blueAccent,
-      onSelected: (bool selected) {
+    
+    return GestureDetector(
+      onTap: () {
         setState(() {
-          if (selected) {
-            _settings.criticalSounds.add(key);
-          } else {
+          if (isSelected) {
             _settings.criticalSounds.remove(key);
+          } else {
+            _settings.criticalSounds.add(key);
           }
           _saveSettings();
         });
       },
-      backgroundColor: Colors.white.withOpacity(0.1),
-      labelStyle: const TextStyle(color: Colors.white),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected 
+              ? const Color(0xFF4A9FFF).withOpacity(0.2)
+              : const Color(0xFF0F1419),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: isSelected 
+                ? const Color(0xFF4A9FFF)
+                : const Color(0xFF2A3F54),
+            width: 2,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (isSelected) ...[
+              const Icon(
+                Icons.check,
+                color: Color(0xFF4A9FFF),
+                size: 18,
+              ),
+              const SizedBox(width: 6),
+            ],
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? const Color(0xFF4A9FFF) : Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return Container(
+      height: 80,
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+      decoration: const BoxDecoration(
+        color: Color(0xFF1A2632),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: [
+          _buildNavItem(Icons.home, true, () => Navigator.pop(context)),
+          _buildNavItem(Icons.credit_card, false, null),
+          _buildNavItem(Icons.music_note, false, null),
+          _buildNavItem(Icons.settings, false, null),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, bool isActive, VoidCallback? onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xFF4A9FFF) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Icon(
+          icon,
+          color: isActive ? Colors.white : const Color(0xFF9DABB9),
+          size: 28,
+        ),
+      ),
     );
   }
 }

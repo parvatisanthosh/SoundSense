@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../shared/widgets/sound_card.dart';
 import '../../core/models/detected_sound.dart';
@@ -41,7 +42,6 @@ class _DashboardScreenState extends State<DashboardScreen>
   DetectedSound? _currentSound;
   bool _showCriticalAlert = false;
 
-  // Animation controllers for floating effect
   late List<AnimationController> _floatControllers;
   late List<Animation<double>> _floatAnimations;
 
@@ -129,8 +129,8 @@ class _DashboardScreenState extends State<DashboardScreen>
       setState(() {
         _detectedSounds.insert(0, customDetected);
         _currentSound = customDetected;
-        if (_detectedSounds.length > 5) {
-          _detectedSounds = _detectedSounds.sublist(0, 5);
+        if (_detectedSounds.length > 20) {
+          _detectedSounds = _detectedSounds.sublist(0, 20);
         }
       });
       
@@ -171,8 +171,8 @@ class _DashboardScreenState extends State<DashboardScreen>
             _showCriticalAlert = true;
           }
 
-          if (_detectedSounds.length > 5) {
-            _detectedSounds = _detectedSounds.sublist(0, 5);
+          if (_detectedSounds.length > 20) {
+            _detectedSounds = _detectedSounds.sublist(0, 20);
           }
         });
       }
@@ -317,109 +317,17 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
   }
 
-  // NEW: Floating Lottie Animation Circle
-  Widget _buildFloatingSoundCircle(DetectedSound sound, int index) {
-    return AnimatedBuilder(
-      animation: _floatAnimations[index % 5],
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, _floatAnimations[index % 5].value),
-          child: GestureDetector(
-            onTap: () => _onSoundTap(sound),
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                color: const Color(0xFF1A2632),
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Colors.white.withOpacity(0.05),
-                  width: 1,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: _getColorForPriority(sound.priority).withOpacity(0.15),
-                    blurRadius: 20,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Lottie Animation instead of Icon
-                  SizedBox(
-                    width: 50,
-                    height: 50,
-                    child: Lottie.asset(
-                      AnimationService.getAnimationPath(sound.name),
-                      fit: BoxFit.contain,
-                      repeat: true,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    sound.name.length > 10 
-                        ? '${sound.name.substring(0, 10)}...' 
-                        : sound.name,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _formatTime(sound.timestamp),
-                    style: const TextStyle(
-                      color: Color(0xFF9DABB9),
-                      fontSize: 9,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildFeatureCard({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 70,
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.3)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 26),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: color,
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  IconData _getIconForSound(String soundName) {
+    final lower = soundName.toLowerCase();
+    if (lower.contains('dog') || lower.contains('bark')) return Icons.pets;
+    if (lower.contains('door') || lower.contains('bell')) return Icons.notifications;
+    if (lower.contains('alarm') || lower.contains('fire')) return Icons.alarm;
+    if (lower.contains('baby') || lower.contains('cry')) return Icons.child_care;
+    if (lower.contains('car') || lower.contains('horn')) return Icons.directions_car;
+    if (lower.contains('silence') || lower.contains('mute')) return Icons.volume_off;
+    if (lower.contains('pencil') || lower.contains('write')) return Icons.edit;
+    if (lower.contains('ping')) return Icons.notifications_active;
+    return Icons.graphic_eq;
   }
 
   @override
@@ -440,248 +348,671 @@ class _DashboardScreenState extends State<DashboardScreen>
 
     return Scaffold(
       backgroundColor: const Color(0xFF0F1419),
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () {},
-        ),
-        title: const Text(
-          'Dhwani',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-            fontSize: 20,
-          ),
-        ),
-        backgroundColor: const Color(0xFF1A2632),
-        centerTitle: true,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined, color: Colors.white),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const SettingsScreen(),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Main Content Area with Floating Lottie Animations
-          Expanded(
-            child: Stack(
-              children: [
-                // Background Lottie (bloob.json as ambient background)
-                Positioned.fill(
-                  child: Opacity(
-                    opacity: 0.3,
-                    child: Lottie.asset(
-                      'assets/animations/bloob.json',
-                      fit: BoxFit.cover,
-                      repeat: true,
-                    ),
-                  ),
-                ),
-
-                // Content
-                recentSounds.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.hearing,
-                              size: 64,
-                              color: Colors.grey[700],
-                            ),
-                            const SizedBox(height: 16),
-                            Text(
-                              _isListening
-                                  ? 'Listening for sounds...'
-                                  : 'Start listening to detect sounds',
-                              style: const TextStyle(
-                                color: Color(0xFF9DABB9),
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        ),
-                      )
-                    : SingleChildScrollView(
-                        child: Container(
-                          height: MediaQuery.of(context).size.height - 280,
-                          padding: const EdgeInsets.all(24),
-                          child: Stack(
-                            children: [
-                              // Floating Lottie circles in organic positions
-                              if (recentSounds.isNotEmpty)
-                                Positioned(
-                                  top: 20,
-                                  left: MediaQuery.of(context).size.width * 0.3,
-                                  child: _buildFloatingSoundCircle(recentSounds[0], 0),
-                                ),
-                              if (recentSounds.length > 1)
-                                Positioned(
-                                  top: 100,
-                                  right: 40,
-                                  child: _buildFloatingSoundCircle(recentSounds[1], 1),
-                                ),
-                              if (recentSounds.length > 2)
-                                Positioned(
-                                  top: 200,
-                                  left: 20,
-                                  child: _buildFloatingSoundCircle(recentSounds[2], 2),
-                                ),
-                              if (recentSounds.length > 3)
-                                Positioned(
-                                  top: 320,
-                                  left: MediaQuery.of(context).size.width * 0.35,
-                                  child: _buildFloatingSoundCircle(recentSounds[3], 3),
-                                ),
-                              if (recentSounds.length > 4)
-                                Positioned(
-                                  top: 180,
-                                  right: MediaQuery.of(context).size.width * 0.25,
-                                  child: _buildFloatingSoundCircle(recentSounds[4], 4),
-                                ),
-                            ],
-                          ),
-                        ),
-                      ),
-              ],
-            ),
-          ),
-
-          // Feature Cards Row at Bottom
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: const BoxDecoration(
-              color: Color(0xFF1A2632),
-              border: Border(
-                top: BorderSide(color: Color(0xFF2A3642), width: 1),
-              ),
-            ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildFeatureCard(
-                    icon: Icons.music_note,
-                    label: 'Train\nSounds',
-                    color: Colors.purple,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SoundTrainingScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 10),
-                  _buildFeatureCard(
-                    icon: Icons.person_add,
-                    label: 'Voice\nProfiles',
-                    color: Colors.orange,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AzureVoiceTrainingScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 10),
-                  _buildFeatureCard(
-                    icon: Icons.shield_moon,
-                    label: 'Sleep\nMode',
-                    color: Colors.indigo,
-                    onTap: () {
-                      Navigator.pushNamed(context, '/sleep_mode');
-                    },
-                  ),
-                  const SizedBox(width: 10),
-                  _buildFeatureCard(
-                    icon: Icons.volume_up,
-                    label: 'Test\nTTS',
-                    color: Colors.green,
-                    onTap: _testTTS,
-                  ),
-                  const SizedBox(width: 10),
-                  _buildFeatureCard(
-                    icon: Icons.closed_caption,
-                    label: 'Live\nCaptions',
-                    color: Colors.cyan,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const EnhancedTranscriptionScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-
-          // Bottom Navigation Bar
-          Container(
-            height: 70,
-            decoration: const BoxDecoration(
-              color: Color(0xFF1A2632),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildNavItem(Icons.home, 'Home', true),
-                _buildNavItem(Icons.closed_caption, 'Captions', false),
-                _buildNavItem(Icons.tune, 'Custom', false),
-                _buildNavItem(Icons.settings, 'Settings', false),
-              ],
-            ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _toggleListening,
-        backgroundColor: _isListening ? const Color(0xFFFF4757) : const Color(0xFF137FEC),
-        child: Icon(
-          _isListening ? Icons.stop : Icons.mic,
-          color: Colors.white,
+      body: SafeArea(
+        child: Column(
+          children: [
+            _buildSimpleHeader(),
+            _buildListeningStatus(),
+            Expanded(child: _buildFloatingBubblesView(recentSounds)),
+            _buildQuickActions(),
+            _buildBottomNav(),
+          ],
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, bool isActive) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          color: isActive ? const Color(0xFF137FEC) : const Color(0xFF9DABB9),
-          size: 24,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: isActive ? const Color(0xFF137FEC) : const Color(0xFF9DABB9),
-            fontSize: 11,
-            fontWeight: isActive ? FontWeight.w600 : FontWeight.normal,
+  Widget _buildSimpleHeader() {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: const BoxDecoration(
+              color: Color(0xFF1A2632),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+          ),
+          const Text(
+            'DHWANI',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 2,
+            ),
+          ),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+            },
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: const BoxDecoration(
+                color: Color(0xFF1A2632),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.settings, color: Colors.white, size: 24),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildListeningStatus() {
+    if (!_isListening) return const SizedBox.shrink();
+    
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A2632),
+          borderRadius: BorderRadius.circular(25),
+          border: Border.all(
+            color: const Color(0xFF00BCD4).withOpacity(0.3),
+            width: 1.5,
           ),
         ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: const BoxDecoration(
+                color: Color(0xFF00BCD4),
+                shape: BoxShape.circle,
+              ),
+            ).animate(onPlay: (c) => c.repeat())
+              .fadeIn(duration: 600.ms)
+              .then()
+              .fadeOut(duration: 600.ms),
+            const SizedBox(width: 10),
+            const Text(
+              'LISTENING MODE ACTIVE',
+              style: TextStyle(
+                color: Color(0xFF00BCD4),
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFloatingBubblesView(List<DetectedSound> sounds) {
+    return Stack(
+      children: [
+        // Background Lottie
+        Positioned.fill(
+          child: Opacity(
+            opacity: 0.15,
+            child: Lottie.asset(
+              'assets/animations/bloob.json',
+              fit: BoxFit.cover,
+              repeat: true,
+            ),
+          ),
+        ),
+
+        // Concentric ripple circles
+        Positioned.fill(
+          child: Center(
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                _buildRippleCircle(300, 0.05),
+                _buildRippleCircle(450, 0.03),
+                _buildRippleCircle(600, 0.02),
+              ],
+            ),
+          ),
+        ),
+
+        // Content
+        if (sounds.isEmpty)
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.hearing,
+                  size: 64,
+                  color: Colors.grey.shade700,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  _isListening
+                      ? 'Listening for sounds...'
+                      : 'Tap microphone to start',
+                  style: const TextStyle(
+                    color: Color(0xFF9DABB9),
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          Stack(
+            children: [
+              // Critical Alert Card (if critical sound exists)
+              if (_currentSound != null && _currentSound!.priority == 'critical')
+                Positioned(
+                  top: 20,
+                  left: MediaQuery.of(context).size.width * 0.15,
+                  right: MediaQuery.of(context).size.width * 0.15,
+                  child: _buildCriticalAlertCard(),
+                ),
+
+              // Central Circle with waveform
+              Center(
+                child: Container(
+                  width: 160,
+                  height: 160,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        const Color(0xFF1A2632).withOpacity(0.8),
+                        const Color(0xFF0F1419).withOpacity(0.6),
+                      ],
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF4A9FFF).withOpacity(0.2),
+                        blurRadius: 30,
+                        spreadRadius: 10,
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.graphic_eq,
+                    color: Colors.white,
+                    size: 64,
+                  ),
+                ).animate(onPlay: (c) => c.repeat())
+                  .scale(begin: const Offset(1, 1), end: const Offset(1.05, 1.05), duration: 2000.ms)
+                  .then()
+                  .scale(begin: const Offset(1.05, 1.05), end: const Offset(1, 1), duration: 2000.ms),
+              ),
+
+              // Floating sound pills around center
+              ...sounds.asMap().entries.map((entry) {
+                final index = entry.key;
+                final sound = entry.value;
+                return _buildFloatingPill(sound, index, sounds.length);
+              }),
+            ],
+          ),
       ],
+    );
+  }
+
+  Widget _buildRippleCircle(double size, double opacity) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: const Color(0xFF4A9FFF).withOpacity(opacity),
+          width: 1,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCriticalAlertCard() {
+    if (_currentSound == null) return const SizedBox.shrink();
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A2632),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: const Color(0xFFFF4757).withOpacity(0.3),
+          width: 2,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF4757),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Icon(Icons.warning, color: Colors.white, size: 28),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _currentSound!.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                const Text(
+                  'CRITICAL ALERT',
+                  style: TextStyle(
+                    color: Color(0xFFFF4757),
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFloatingPill(DetectedSound sound, int index, int total) {
+    // Position pills in a circle around the center
+    final angle = (2 * math.pi * index) / total;
+    final radius = 140.0;
+    final centerX = MediaQuery.of(context).size.width / 2;
+    final centerY = 250.0;
+    
+    final x = centerX + (radius * math.cos(angle)) - 90;
+    final y = centerY + (radius * math.sin(angle)) - 30;
+    
+    return Positioned(
+      left: x,
+      top: y,
+      child: AnimatedBuilder(
+        animation: _floatAnimations[index % 5],
+        builder: (context, child) {
+          return Transform.translate(
+            offset: Offset(0, _floatAnimations[index % 5].value),
+            child: GestureDetector(
+              onTap: () => _onSoundTap(sound),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1A2632),
+                  borderRadius: BorderRadius.circular(25),
+                  border: Border.all(
+                    color: _getColorForPriority(sound.priority).withOpacity(0.3),
+                    width: 2,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: _getColorForPriority(sound.priority).withOpacity(0.2),
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: _getColorForPriority(sound.priority).withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        _getIconForSound(sound.name),
+                        color: _getColorForPriority(sound.priority),
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          sound.name.replaceAll('⭐ ', ''),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          _formatTime(sound.timestamp),
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.5),
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildQuickActions() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Control Center heading
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 2,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.white.withOpacity(0.0),
+                      Colors.white.withOpacity(0.3),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'CONTROL CENTER',
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.5),
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Container(
+                  height: 2,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.white.withOpacity(0.3),
+                        Colors.white.withOpacity(0.0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          
+          // Top row: Train Sounds, Voice Profiles, Sleep Mode
+          Row(
+            children: [
+              Expanded(
+                child: _buildControlCard(
+                  icon: Icons.music_note,
+                  label: 'Train\nSounds',
+                  color: const Color(0xFF9C27B0),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SoundTrainingScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildControlCard(
+                  icon: Icons.person_add,
+                  label: 'Voice\nProfiles',
+                  color: const Color(0xFFFF9800),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AzureVoiceTrainingScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildControlCard(
+                  icon: Icons.shield_moon,
+                  label: 'Sleep\nMode',
+                  color: const Color(0xFF3F51B5),
+                  onTap: () {
+                    Navigator.pushNamed(context, '/sleep_mode');
+                  },
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 12),
+          
+          // Bottom row: Test TTS, Live Caption
+          Row(
+            children: [
+              Expanded(
+                child: _buildWideControlCard(
+                  icon: Icons.volume_up,
+                  label: 'Test TTS',
+                  color: const Color(0xFF4CAF50),
+                  onTap: _testTTS,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildWideControlCard(
+                  icon: Icons.closed_caption,
+                  label: 'Live Caption',
+                  color: const Color(0xFF00BCD4),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const EnhancedTranscriptionScreen(),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildControlCard({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 110,
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A2632),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.05),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 32),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                height: 1.3,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWideControlCard({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 70,
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A2632),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Colors.white.withOpacity(0.05),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return Container(
+      height: 80,
+      decoration: const BoxDecoration(
+        color: Color(0xFF1A2632),
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildNavItem(Icons.home, true, null),
+              _buildNavItem(Icons.credit_card, false, null),
+              const SizedBox(width: 80),
+              _buildNavItem(Icons.tune, false, null),
+              _buildNavItem(Icons.settings, false, () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                );
+              }),
+            ],
+          ),
+          
+          Positioned(
+            top: -25,
+            left: MediaQuery.of(context).size.width / 2 - 70,
+            child: GestureDetector(
+              onTap: _toggleListening,
+              child: Container(
+                width: 140,
+                height: 64,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFF4757), Color(0xFFFF6B81)],
+                  ),
+                  borderRadius: BorderRadius.circular(32),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFFFF4757).withOpacity(0.4),
+                      blurRadius: 20,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'SOS',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      _isListening ? Icons.mic : Icons.location_on,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, bool isActive, VoidCallback? onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xFF4A9FFF) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Icon(
+          icon,
+          color: isActive ? Colors.white : const Color(0xFF9DABB9),
+          size: 28,
+        ),
+      ),
     );
   }
 }
