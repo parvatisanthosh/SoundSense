@@ -5,7 +5,7 @@ class ChatService {
   // Replace with your API key
   static const String _apiKey = 'AIzaSyA9E5q63mvxDPCVCIuaYQL3HRMudz34Knc';
   static const String _baseUrl =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent';
 
 
   // Store recent sounds for context
