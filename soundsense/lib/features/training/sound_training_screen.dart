@@ -63,7 +63,7 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F1419),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: _isInitialized
             ? (_currentSession == null ? _buildSetupView() : _buildTrainingView())
@@ -86,13 +86,13 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Teach Dhwani',
-                  style: TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold, height: 1.2),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 40, fontWeight: FontWeight.bold, height: 1.2),
                 ),
-                const Text(
+                Text(
                   'a new sound',
-                  style: TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold, height: 1.2),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 40, fontWeight: FontWeight.bold, height: 1.2),
                 ),
                 const SizedBox(height: 32),
                 _buildSoundIdentityCard(),
@@ -123,16 +123,16 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
             child: Container(
               width: 56,
               height: 56,
-              decoration: const BoxDecoration(color: Color(0xFF1A2632), shape: BoxShape.circle),
-              child: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+              decoration: BoxDecoration(color: Theme.of(context).cardTheme.color, shape: BoxShape.circle),
+              child: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface, size: 24),
             ),
           ),
-          const Text('New Sound', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+          Text('New Sound', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 24, fontWeight: FontWeight.bold)),
           Container(
             width: 56,
             height: 56,
-            decoration: const BoxDecoration(color: Color(0xFF1A2632), shape: BoxShape.circle),
-            child: const Icon(Icons.more_horiz, color: Colors.white, size: 24),
+            decoration: BoxDecoration(color: Theme.of(context).cardTheme.color, shape: BoxShape.circle),
+            child: Icon(Icons.more_horiz, color: Theme.of(context).colorScheme.onSurface, size: 24),
           ),
         ],
       ),
@@ -143,13 +143,13 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A2632),
+        color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('SOUND IDENTITY', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 1.5)),
+          Text('SOUND IDENTITY', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 1.5)),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -163,10 +163,10 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
               Expanded(
                 child: TextField(
                   controller: _nameController,
-                  style: const TextStyle(color: Colors.white, fontSize: 18),
+                  style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18),
                   decoration: InputDecoration(
                     hintText: 'e.g. Microwave Beep',
-                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 18),
+                    hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4), fontSize: 18),
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.zero,
                   ),
@@ -184,7 +184,7 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Category', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+        Text('Category', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16, fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),
         Wrap(
           spacing: 8,
@@ -196,7 +196,7 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: isSelected ? const Color(0xFF4A9FFF) : const Color(0xFF1A2632),
+                  color: isSelected ? const Color(0xFF4A9FFF) : Theme.of(context).cardTheme.color,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -204,7 +204,7 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
                   children: [
                     Text(SoundCategory.getIcon(category)),
                     const SizedBox(width: 6),
-                    Text(category, style: TextStyle(color: Colors.white, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+                    Text(category, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
                   ],
                 ),
               ),
@@ -225,8 +225,8 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text('Your Custom Sounds', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
-            Text('${sounds.length} sounds', style: TextStyle(color: Colors.white.withOpacity(0.5))),
+            Text('Your Custom Sounds', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16, fontWeight: FontWeight.w600)),
+            Text('${sounds.length} sounds', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
           ],
         ),
         const SizedBox(height: 12),
@@ -239,7 +239,7 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: const Color(0xFF1A2632), borderRadius: BorderRadius.circular(12)),
+      decoration: BoxDecoration(color: Theme.of(context).cardTheme.color, borderRadius: BorderRadius.circular(12)),
       child: Row(
         children: [
           Text(sound.icon, style: const TextStyle(fontSize: 24)),
@@ -248,8 +248,8 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(sound.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
-                Text('${sound.category} • ${sound.sampleCount} samples', style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12)),
+                Text(sound.name, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontWeight: FontWeight.w600)),
+                Text('${sound.category} • ${sound.sampleCount} samples', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 12)),
               ],
             ),
           ),
@@ -294,8 +294,8 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Teach Dhwani', style: TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold, height: 1.2)),
-                const Text('a new sound', style: TextStyle(color: Colors.white, fontSize: 40, fontWeight: FontWeight.bold, height: 1.2)),
+                Text('Teach Dhwani', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 40, fontWeight: FontWeight.bold, height: 1.2)),
+                Text('a new sound', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 40, fontWeight: FontWeight.bold, height: 1.2)),
                 const SizedBox(height: 32),
                 _buildSoundIdentityCard(),
                 const SizedBox(height: 32),
@@ -338,18 +338,18 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Column(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Record Sample', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                Text('Record Sample', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 24, fontWeight: FontWeight.bold)),
                 SizedBox(height: 4),
-                Text('Capture clear audio of the sound.', style: TextStyle(color: Color(0xFF9DABB9), fontSize: 14)),
+                Text('Capture clear audio of the sound.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), fontSize: 14)),
               ],
             ),
             Container(
               width: 56,
               height: 56,
-              decoration: const BoxDecoration(color: Color(0xFF1A2632), shape: BoxShape.circle),
+              decoration: BoxDecoration(color: Theme.of(context).cardTheme.color, shape: BoxShape.circle),
               child: const Icon(Icons.mic, color: Color(0xFF4A9FFF), size: 28),
             ),
           ],
@@ -357,8 +357,8 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
         const SizedBox(height: 24),
         Container(
           height: 200,
-          decoration: BoxDecoration(color: const Color(0xFF1A2632), borderRadius: BorderRadius.circular(20)),
-          child: Center(child: _isRecording ? _buildWaveformAnimation() : Text('Ready to record', style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 16))),
+          decoration: BoxDecoration(color: Theme.of(context).cardTheme.color, borderRadius: BorderRadius.circular(20)),
+          child: Center(child: _isRecording ? _buildWaveformAnimation() : Text('Ready to record', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3), fontSize: 16))),
         ),
         const SizedBox(height: 24),
         Row(
@@ -387,13 +387,13 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
             Expanded(
               child: Container(
                 height: 64,
-                decoration: BoxDecoration(color: const Color(0xFF1A2632), borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF2A3F54))),
-                child: const Row(
+                decoration: BoxDecoration(color: Theme.of(context).cardTheme.color, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFF2A3F54))),
+                child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.upload_file, color: Colors.white, size: 24),
+                    Icon(Icons.upload_file, color: Theme.of(context).colorScheme.onSurface, size: 24),
                     SizedBox(width: 12),
-                    Text('Upload', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
+                    Text('Upload', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),
@@ -444,7 +444,7 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
     return Container(
       height: 100,
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-      decoration: const BoxDecoration(color: Color(0xFF1A2632), borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      decoration: BoxDecoration(color: Theme.of(context).bottomNavigationBarTheme.backgroundColor, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -464,11 +464,11 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
           width: 56,
           height: 56,
           decoration: BoxDecoration(color: isActive ? const Color(0xFF4A9FFF) : Colors.transparent, borderRadius: BorderRadius.circular(16)),
-          child: Icon(icon, color: isActive ? Colors.white : const Color(0xFF9DABB9), size: isActive ? 32 : 28),
+          child: Icon(icon, color: isActive ? Colors.white : Theme.of(context).colorScheme.onSurface.withOpacity(0.6), size: isActive ? 32 : 28),
         ),
         if (label.isNotEmpty) ...[
           const SizedBox(height: 4),
-          Text(label, textAlign: TextAlign.center, style: const TextStyle(color: Color(0xFF9DABB9), fontSize: 10)),
+          Text(label, textAlign: TextAlign.center, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 10)),
         ],
       ],
     );
@@ -600,11 +600,11 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1C2136),
-        title: const Text('Delete Sound?', style: TextStyle(color: Colors.white)),
+        backgroundColor: Theme.of(context).cardTheme.color,
+        title: Text('Delete Sound?', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
         content: Text(
           'Delete "${sound.name}"? This cannot be undone.',
-          style: const TextStyle(color: Colors.white70),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
         ),
         actions: [
           TextButton(

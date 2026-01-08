@@ -56,15 +56,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF1A2632), // Dark blue-gray
-              Color(0xFF0F1419), // Darker
-            ],
-          ),
+        decoration: BoxDecoration(
+          color: Theme.of(context).scaffoldBackgroundColor,
         ),
         child: SafeArea(
           child: Column(
@@ -98,10 +91,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                         fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) {
                           // Fallback to icon if animation fails
-                          return const Icon(
+                          return Icon(
                             Icons.graphic_eq,
                             size: 80,
-                            color: Color(0xFF0F1419),
+                            color: Theme.of(context).scaffoldBackgroundColor,
                           );
                         },
                       ),
@@ -115,10 +108,10 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
               // App Name
               FadeTransition(
                 opacity: _fadeAnimation,
-                child: const Text(
+                child: Text(
                   'Dhwani',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 48,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 2,
@@ -135,7 +128,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   'Visualizing the world of sound\naround you.',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.7),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                     fontSize: 16,
                     height: 1.5,
                     letterSpacing: 0.5,
@@ -152,7 +145,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   margin: const EdgeInsets.symmetric(horizontal: 40),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1A2632),
+                    color: Theme.of(context).cardTheme.color,
                     borderRadius: BorderRadius.circular(50),
                     border: Border.all(
                       color: Colors.white.withOpacity(0.1),
@@ -187,17 +180,17 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                           Text(
                             'STATUS',
                             style: TextStyle(
-                              color: Colors.white.withOpacity(0.5),
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
                               letterSpacing: 1.5,
                             ),
                           ),
                           const SizedBox(height: 2),
-                          const Text(
+                          Text(
                             'Listening...',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: Theme.of(context).colorScheme.onSurface,
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
@@ -228,7 +221,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(4),
                     child: LinearProgressIndicator(
-                      backgroundColor: const Color(0xFF1A2632),
+                      backgroundColor: Theme.of(context).cardTheme.color,
                       valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF4A9FFF)),
                       minHeight: 4,
                     ),
@@ -244,7 +237,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 child: Text(
                   'V2.4.0 • SECURE INIT',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.3),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                     letterSpacing: 2,

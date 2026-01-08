@@ -73,18 +73,18 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F1419),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF0F1419),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded, color: Colors.white),
+          icon: Icon(Icons.arrow_back_rounded, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Voice Profiles',
           style: TextStyle(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -179,10 +179,10 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Person\'s Name',
           style: TextStyle(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -190,13 +190,13 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
         const SizedBox(height: 10),
         TextField(
           controller: _nameController,
-          style: const TextStyle(color: Colors.white, fontSize: 16),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16),
           decoration: InputDecoration(
             hintText: 'e.g., Mom, Dad, John',
-            hintStyle: const TextStyle(color: Color(0xFF9DABB9)),
-            prefixIcon: const Icon(Icons.person_rounded, color: Color(0xFF9DABB9)),
+            hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
+            prefixIcon: Icon(Icons.person_rounded, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
             filled: true,
-            fillColor: const Color(0xFF1A2632),
+            fillColor: Theme.of(context).cardTheme.color,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
@@ -212,10 +212,10 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Relationship',
           style: TextStyle(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
@@ -234,12 +234,12 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
                 decoration: BoxDecoration(
                   color: isSelected
                       ? const Color(0xFF4A9FFF)
-                      : const Color(0xFF1A2632),
+                      : Theme.of(context).cardTheme.color,
                   borderRadius: BorderRadius.circular(25),
                   border: Border.all(
                     color: isSelected
                         ? const Color(0xFF4A9FFF)
-                        : Colors.white.withOpacity(0.1),
+                        : Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
                   ),
                 ),
                 child: Row(
@@ -250,7 +250,7 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
                     Text(
                       rel['name']!,
                       style: TextStyle(
-                        color: isSelected ? Colors.white : const Color(0xFF9DABB9),
+                        color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                         fontSize: 14,
                       ),
@@ -349,9 +349,9 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A2632),
+        color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
+        border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05)),
       ),
       child: Column(
         children: [
@@ -368,14 +368,14 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Training',
-                      style: TextStyle(color: Color(0xFF9DABB9), fontSize: 14),
+                      style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 14),
                     ),
                     Text(
                       _nameController.text,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -437,7 +437,7 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
                   value: _enrollmentProgress,
-                  backgroundColor: const Color(0xFF2A3F54),
+                  backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
                   valueColor: AlwaysStoppedAnimation(
                     _isEnrolled
                         ? const Color(0xFF2ED573)
@@ -461,7 +461,7 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
             ),
             Text(
               'seconds recorded of $_targetSeconds',
-              style: const TextStyle(color: Color(0xFF9DABB9), fontSize: 14),
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 14),
             ),
           ],
 
@@ -587,10 +587,10 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Saved Profiles',
           style: TextStyle(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -603,9 +603,9 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
             margin: const EdgeInsets.only(bottom: 12),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF1A2632),
+              color: Theme.of(context).cardTheme.color,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: Colors.white.withOpacity(0.05)),
+              border: Border.all(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.05)),
             ),
             child: Row(
               children: [
@@ -628,8 +628,8 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
                     children: [
                       Text(
                         profile.personName,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,
                         ),

@@ -29,7 +29,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F1419),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -109,7 +109,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return Container(
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: const Color(0xFF1A2632),
+            color: Theme.of(context).cardTheme.color,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(
               color: status.isSleepModeActive 
@@ -168,7 +168,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Text(
             'Schedule',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.6),
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
               fontSize: 12,
               fontWeight: FontWeight.w600,
               letterSpacing: 1,
@@ -183,7 +183,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Text(
                   'Sleep Start',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
                     fontSize: 16,
                   ),
                 ),
@@ -198,7 +198,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0F1419),
+                    color: Theme.of(context).scaffoldBackgroundColor,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: const Color(0xFF9C27B0).withOpacity(0.3),
@@ -210,8 +210,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const SizedBox(width: 8),
                       Text(
                         schedule.startTime,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -232,7 +232,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Text(
                   'Wake Up',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
                     fontSize: 16,
                   ),
                 ),
@@ -247,7 +247,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF0F1419),
+                    color: Theme.of(context).scaffoldBackgroundColor,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: const Color(0xFF4A9FFF).withOpacity(0.3),
@@ -259,8 +259,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       const SizedBox(width: 8),
                       Text(
                         schedule.endTime,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
@@ -313,8 +313,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Text(
                   status.statusText,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),
@@ -325,7 +325,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ? 'Ends in $timeText'
                     : 'Starts in $timeText',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.5),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                     fontSize: 12,
                   ),
                 ),
@@ -363,7 +363,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         decoration: BoxDecoration(
           color: isManualActive 
             ? const Color(0xFF9C27B0).withOpacity(0.1)
-            : const Color(0xFF0F1419),
+            : Theme.of(context).scaffoldBackgroundColor,
           borderRadius: const BorderRadius.only(
             bottomLeft: Radius.circular(20),
             bottomRight: Radius.circular(20),
@@ -467,14 +467,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           
           const SizedBox(width: 16),
           
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Settings',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),
@@ -483,7 +483,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 Text(
                   'Customize your experience',
                   style: TextStyle(
-                    color: Color(0xFF9DABB9),
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
                     fontSize: 14,
                   ),
                 ),
@@ -499,7 +499,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Text(
       title.toUpperCase(),
       style: TextStyle(
-        color: Colors.white.withOpacity(0.5),
+        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
         fontSize: 12,
         fontWeight: FontWeight.w700,
         letterSpacing: 1.5,
@@ -511,7 +511,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A2632),
+        color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: Colors.white.withOpacity(0.05),
@@ -552,7 +552,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Text(
                     'LOW',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 1,
@@ -561,7 +561,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Text(
                     'HIGH',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 1,
@@ -598,7 +598,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF0F1419),
+              color: Theme.of(context).scaffoldBackgroundColor,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
@@ -617,11 +617,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 const SizedBox(width: 16),
-                const Expanded(
+                Expanded(
                   child: Text(
                     'Active Detection',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
@@ -667,7 +667,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A2632),
+        color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: Colors.white.withOpacity(0.05),
@@ -727,7 +727,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A2632),
+        color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: Colors.white.withOpacity(0.05),
@@ -746,7 +746,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: const Color(0xFF0F1419),
+                color: Theme.of(context).scaffoldBackgroundColor,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
@@ -765,14 +765,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Emergency Contacts',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onSurface,
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
                           ),
@@ -781,7 +781,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         Text(
                           'Manage SOS contacts',
                           style: TextStyle(
-                            color: Color(0xFF9DABB9),
+                            color: Theme.of(context).textTheme.bodyMedium?.color,
                             fontSize: 14,
                           ),
                         ),
@@ -806,7 +806,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A2632),
+        color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
           color: Colors.white.withOpacity(0.05),
@@ -816,13 +816,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         children: [
           _buildAlertItem(
-            icon: Icons.dark_mode,
+            icon: _settings.isDarkMode ? Icons.dark_mode : Icons.light_mode,
             iconColor: const Color(0xFF4A9FFF),
             iconBgColor: const Color(0xFF4A9FFF).withOpacity(0.2),
-            title: 'Dark Mode',
-            subtitle: 'Always on',
-            value: true,
-            onChanged: null,
+            title: _settings.isDarkMode ? 'Dark Mode' : 'Light Mode',
+            subtitle: _settings.isDarkMode ? 'On' : 'Off',
+            value: _settings.isDarkMode,
+            onChanged: (value) async {
+              await _settings.setDarkMode(value);
+              setState(() {});
+            },
           ),
           
           Divider(color: Colors.white.withOpacity(0.05), height: 1),
@@ -833,8 +836,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
             child: Container(
               padding: const EdgeInsets.all(20),
-              decoration: const BoxDecoration(
-                color: Color(0xFF0F1419),
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
                 borderRadius: BorderRadius.only(
                   bottomLeft: Radius.circular(20),
                   bottomRight: Radius.circular(20),
@@ -856,7 +859,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Reset Settings',
                       style: TextStyle(
@@ -887,7 +890,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFF0F1419),
+        color: Theme.of(context).scaffoldBackgroundColor,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -912,8 +915,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -921,8 +924,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 4),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    color: Color(0xFF9DABB9),
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyMedium?.color,
                     fontSize: 14,
                   ),
                 ),

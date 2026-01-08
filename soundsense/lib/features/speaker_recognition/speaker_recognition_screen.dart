@@ -137,13 +137,13 @@ class _SpeakerRecognitionScreenState extends State<SpeakerRecognitionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F1419),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1A2632),
-        title: const Text('Speaker Recognition'),
+        backgroundColor: Theme.of(context).cardTheme.color,
+        title: Text('Speaker Recognition', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: Icon(Icons.refresh, color: Theme.of(context).colorScheme.onSurface),
             onPressed: _checkServerHealth,
           ),
         ],
@@ -163,9 +163,9 @@ class _SpeakerRecognitionScreenState extends State<SpeakerRecognitionScreen> {
         children: [
           const Icon(Icons.cloud_off, size: 64, color: Colors.red),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Cannot connect to server',
-            style: TextStyle(color: Colors.white, fontSize: 18),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18),
           ),
           const SizedBox(height: 16),
           ElevatedButton(
@@ -207,10 +207,10 @@ class _SpeakerRecognitionScreenState extends State<SpeakerRecognitionScreen> {
           // Current speaker
           Text(
             _currentSpeaker,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
             textAlign: TextAlign.center,
           ),
@@ -223,7 +223,7 @@ class _SpeakerRecognitionScreenState extends State<SpeakerRecognitionScreen> {
               'Confidence: ${(_confidence * 100).toStringAsFixed(1)}%',
               style: TextStyle(
                 fontSize: 18,
-                color: Colors.grey[400],
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
               ),
             ),
           
@@ -270,7 +270,7 @@ class _SpeakerRecognitionScreenState extends State<SpeakerRecognitionScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF1A2632),
+              color: Theme.of(context).cardTheme.color,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -278,12 +278,12 @@ class _SpeakerRecognitionScreenState extends State<SpeakerRecognitionScreen> {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.info_outline, color: Colors.grey[400], size: 20),
+                    Icon(Icons.info_outline, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), size: 20),
                     const SizedBox(width: 8),
                     Text(
                       'How to use:',
                       style: TextStyle(
-                        color: Colors.grey[400],
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                       ),
@@ -296,7 +296,7 @@ class _SpeakerRecognitionScreenState extends State<SpeakerRecognitionScreen> {
                   '2. Then tap "Identify Speaker" to recognize who\'s talking\n'
                   '3. The app will record for 3 seconds',
                   style: TextStyle(
-                    color: Colors.grey[400],
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                     fontSize: 13,
                   ),
                 ),

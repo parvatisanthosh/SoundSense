@@ -60,32 +60,37 @@ class SoundSenseApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Dhwani',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        primaryColor: const Color(0xFF4A9FFF),
-        scaffoldBackgroundColor: const Color(0xFF0F1419),
-        colorScheme: ColorScheme.dark(
-          primary: const Color(0xFF4A9FFF),
-          secondary: const Color(0xFF9C27B0),
-          surface: const Color(0xFF1A2632),
-          background: const Color(0xFF0F1419),
-        ),
-      ),
-      initialRoute: '/splash',
-      routes: {
-        '/splash': (context) => const SplashScreen(),
-        '/': (context) => const DashboardScreen(),
-        '/sleep_mode': (context) => const SleepModeScreen(),
-        '/transcription': (context) => const EnhancedTranscriptionScreen(),
-        '/sound-training': (context) => const SoundTrainingScreen(),
-        '/voice-training': (context) => const AzureVoiceTrainingScreen(),
-        '/speaker-recognition': (context) => const SpeakerRecognitionScreen(),
-        '/settings': (context) => const SettingsScreen(),
-        '/emergency': (context) => const EmergencyContactsScreen(),
-        '/chat': (context) => const ChatScreen(),
+    return ValueListenableBuilder<bool>(
+      valueListenable: SettingsService().darkModeNotifier,
+      builder: (context, isDark, child) {
+        // Update system chrome based on theme
+        SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+          systemNavigationBarColor: isDark ? const Color(0xFF0F1419) : Colors.white,
+          systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
+        ));
+        
+        return MaterialApp(
+          title: 'Dhwani',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+          initialRoute: '/splash',
+          routes: {
+            '/splash': (context) => const SplashScreen(),
+            '/': (context) => const DashboardScreen(),
+            '/sleep_mode': (context) => const SleepModeScreen(),
+            '/transcription': (context) => const EnhancedTranscriptionScreen(),
+            '/sound-training': (context) => const SoundTrainingScreen(),
+            '/voice-training': (context) => const AzureVoiceTrainingScreen(),
+            '/speaker-recognition': (context) => const SpeakerRecognitionScreen(),
+            '/settings': (context) => const SettingsScreen(),
+            '/emergency': (context) => const EmergencyContactsScreen(),
+            '/chat': (context) => const ChatScreen(),
+          },
+        );
       },
     );
   }

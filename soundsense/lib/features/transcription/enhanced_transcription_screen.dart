@@ -292,7 +292,7 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F1419),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: !_isInitialized
             ? const Center(child: CircularProgressIndicator(color: Color(0xFF4A9FFF)))
@@ -346,15 +346,15 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
                 Text(
                   _isListening ? 'Listening now' : 'Ready to listen',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.6),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                     fontSize: 14,
                   ),
                 ),
                 const SizedBox(height: 2),
-                const Text(
+                Text(
                   'Dhwani Live',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
@@ -370,7 +370,7 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: const Color(0xFF1A2632),
+                color: Theme.of(context).cardTheme.color,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
@@ -389,7 +389,7 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
   void _showLanguageSelector() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1A2632),
+      backgroundColor: Theme.of(context).cardTheme.color,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -405,16 +405,16 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.3),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 'Select Language',
-                style: TextStyle(
-                  color: Colors.white,
+                  style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                 ),
@@ -428,7 +428,7 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
                     leading: Text(lang['flag']!, style: const TextStyle(fontSize: 24)),
                     title: Text(
                       lang['name']!,
-                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                       style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16),
                     ),
                     trailing: _selectedLanguage == lang['code']
                         ? const Icon(Icons.check_circle, color: Color(0xFF4A9FFF))
@@ -540,7 +540,7 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
                       _isListening ? 'Start speaking...' : 'Tap microphone to start',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.3),
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
                         fontSize: 24 * _fontSize,
                       ),
                     )
@@ -565,7 +565,7 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
           return TextSpan(
             text: '$word ',
             style: TextStyle(
-              color: isKeyword ? const Color(0xFF4A9FFF) : Colors.white,
+              color: isKeyword ? const Color(0xFF4A9FFF) : Theme.of(context).colorScheme.onSurface,
               fontSize: 32 * _fontSize,
               fontWeight: FontWeight.w600,
               height: 1.3,
@@ -633,9 +633,9 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
   Widget _buildRecentCaptionsSection() {
     return Expanded(
       child: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFF0A0E14),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           children: [
@@ -644,10 +644,10 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Recent Captions',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                     ),
@@ -657,14 +657,14 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1A2632),
+                        color: Theme.of(context).cardTheme.color,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Row(
+                      child: Row(
                         children: [
-                          Icon(Icons.delete_outline, color: Colors.white, size: 18),
-                          SizedBox(width: 4),
-                          Text('Clear', style: TextStyle(color: Colors.white, fontSize: 14)),
+                          Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.onSurface, size: 18),
+                          const SizedBox(width: 4),
+                          Text('Clear', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14)),
                         ],
                       ),
                     ),
@@ -677,7 +677,7 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
                   ? Center(
                       child: Text(
                         'No captions yet',
-                        style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 16),
+                        style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3), fontSize: 16),
                       ),
                     )
                   : ListView.builder(
@@ -708,7 +708,7 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A2632),
+        color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -723,7 +723,7 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
               border: Border.all(
                 color: entry.speakerName != null
                     ? const Color(0xFF4A9FFF).withOpacity(0.3)
-                    : Colors.white.withOpacity(0.1),
+                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
               ),
             ),
             child: Center(child: Text(emoji, style: const TextStyle(fontSize: 24))),
@@ -738,8 +738,8 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
                   children: [
                     Text(
                       speakerName,
-                      style: const TextStyle(
-                        color: Colors.white,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -747,7 +747,7 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
                     Text(
                       time,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.5),
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                         fontSize: 14,
                       ),
                     ),
@@ -768,7 +768,7 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
                 Text(
                   entry.text,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
                     fontSize: 14,
                     height: 1.4,
                   ),

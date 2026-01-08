@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'tts_alert_service.dart';
 
@@ -7,7 +8,9 @@ class SettingsService {
   static const String _normalAlertsKey = 'normal_alerts';
   static const String _vibrationEnabledKey = 'vibration_enabled';
   static const String _vibrationIntensityKey = 'vibration_intensity';
+
   static const String _sensitivityKey = 'sensitivity';
+  static const String _darkModeKey = 'dark_mode';
 
   // Singleton
   static final SettingsService _instance = SettingsService._internal();
@@ -23,6 +26,10 @@ class SettingsService {
   bool vibrationEnabled = true;
   String vibrationIntensity = 'Medium';
   double sensitivity = 0.5;
+  
+  // Theme setting
+  bool isDarkMode = true;
+  final ValueNotifier<bool> darkModeNotifier = ValueNotifier<bool>(true);
 
   bool _ttsEnabled = true;
 
@@ -52,6 +59,10 @@ Future<void> _loadSettings() async {
   vibrationEnabled = _prefs?.getBool(_vibrationEnabledKey) ?? true;
   vibrationIntensity = _prefs?.getString(_vibrationIntensityKey) ?? 'Medium';
   sensitivity = _prefs?.getDouble(_sensitivityKey) ?? 0.5;
+  
+  // Load Dark Mode
+  isDarkMode = _prefs?.getBool(_darkModeKey) ?? true;
+  darkModeNotifier.value = isDarkMode;
   
   // Load TTS setting
   _ttsEnabled = _prefs?.getBool('tts_enabled') ?? true;
@@ -87,6 +98,12 @@ Future<void> _loadSettings() async {
   Future<void> setSensitivity(double value) async {
     sensitivity = value;
     await _prefs?.setDouble(_sensitivityKey, value);
+  }
+
+  Future<void> setDarkMode(bool value) async {
+    isDarkMode = value;
+    darkModeNotifier.value = value;
+    await _prefs?.setBool(_darkModeKey, value);
   }
 
   // Reset to defaults

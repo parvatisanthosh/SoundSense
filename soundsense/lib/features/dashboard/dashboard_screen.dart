@@ -367,7 +367,7 @@ class _DashboardScreenState extends State<DashboardScreen>
   void _onSoundTap(DetectedSound sound) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF1A2632),
+      backgroundColor: Theme.of(context).cardTheme.color,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -379,8 +379,8 @@ class _DashboardScreenState extends State<DashboardScreen>
             // Sound info
             Text(
               sound.name,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),
@@ -389,7 +389,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             Text(
               '${(sound.confidence * 100).toStringAsFixed(0)}% confident',
               style: TextStyle(
-                color: Colors.white.withOpacity(0.6),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                 fontSize: 16,
               ),
             ),
@@ -528,7 +528,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     // SOS confirmation
     if (_showSOSSent) {
       return Scaffold(
-        backgroundColor: const Color(0xFF0F1419),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: Center(
           child: Container(
             margin: const EdgeInsets.all(32),
@@ -543,10 +543,10 @@ class _DashboardScreenState extends State<DashboardScreen>
               children: [
                 const Icon(Icons.check_circle, color: Colors.green, size: 64),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   '✓ SOS Sent!',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),
@@ -555,7 +555,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 Text(
                   '$_sosContactsNotified contacts notified',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
                     fontSize: 18,
                   ),
                 ),
@@ -567,7 +567,7 @@ class _DashboardScreenState extends State<DashboardScreen>
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F1419),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Stack(
           children: [
@@ -628,8 +628,8 @@ class _DashboardScreenState extends State<DashboardScreen>
               children: [
                 Text(
                   suggestion.message,
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
@@ -651,10 +651,10 @@ class _DashboardScreenState extends State<DashboardScreen>
                 setState(() => _currentSuggestion = null);
                 Navigator.pushNamed(context, '/sound-training');
               },
-              child: const Text(
+              child: Text(
                 'Train',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.primary, // or explicit color if needed
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -682,7 +682,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 width: 28,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.3),
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),
@@ -698,15 +698,15 @@ class _DashboardScreenState extends State<DashboardScreen>
                 Text(
                   _isListening ? 'Listening' : 'Ready',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.6),
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                     fontSize: 14,
                   ),
                 ),
-                const Text(
-                  'Dhwani',
+                Text(
+                  'SoundSense',
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -726,7 +726,7 @@ IconButton(
           // Settings button
           IconButton(
             onPressed: () => Navigator.pushNamed(context, '/settings'),
-            icon: const Icon(Icons.settings, color: Colors.white),
+            icon: Icon(Icons.settings, color: Theme.of(context).colorScheme.onSurface),
           ),
         ],
       ),
@@ -742,13 +742,13 @@ IconButton(
             Icon(
               Icons.mic_none,
               size: 80,
-              color: Colors.white.withOpacity(0.3),
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
             ),
             const SizedBox(height: 16),
             Text(
               'Tap microphone to start',
               style: TextStyle(
-                color: Colors.white.withOpacity(0.6),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                 fontSize: 18,
               ),
             ),
@@ -774,7 +774,7 @@ IconButton(
             Text(
               'Recent Speech',
               style: TextStyle(
-                color: Colors.white.withOpacity(0.6),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
@@ -794,7 +794,7 @@ IconButton(
             Text(
               'Detected Sounds',
               style: TextStyle(
-                color: Colors.white.withOpacity(0.6),
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
@@ -893,8 +893,8 @@ IconButton(
           // Live caption text
           Text(
             _partialTranscription,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 18,
               fontStyle: FontStyle.italic,
               height: 1.4,
@@ -911,7 +911,7 @@ IconButton(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A2632),
+        color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: const Color(0xFF4A9FFF).withOpacity(0.3),
@@ -960,8 +960,8 @@ IconButton(
           // Transcription text
           Text(
             entry.text,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 16,
               height: 1.4,
             ),
@@ -1017,7 +1017,7 @@ IconButton(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Color(0xFF1A2632).withOpacity(opacity),
+          color: Theme.of(context).cardTheme.color?.withOpacity(opacity) ?? Colors.transparent,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: _getPriorityColor(sound.priority).withOpacity(0.5),
@@ -1047,8 +1047,8 @@ IconButton(
                 children: [
                   Text(
                     sound.name,
-                    style: const TextStyle(
-                      color: Colors.white,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -1082,13 +1082,13 @@ IconButton(
                           Icon(
                             Icons.person,
                             size: 14,
-                            color: Color(0xFF4A9FFF).withOpacity(0.7),
+                            color: const Color(0xFF4A9FFF).withOpacity(0.7),
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '${_hub.currentSpeaker} (${(_hub.currentSpeakerConfidence * 100).toStringAsFixed(0)}%)',
                             style: TextStyle(
-                              color: Color(0xFF4A9FFF).withOpacity(0.7),
+                              color: const Color(0xFF4A9FFF).withOpacity(0.7),
                               fontSize: 12,
                             ),
                           ),
@@ -1145,9 +1145,9 @@ IconButton(
   Widget _buildControlCenter() {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: const BoxDecoration(
-        color: Color(0xFF0A0E14),
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         children: [
@@ -1228,7 +1228,7 @@ IconButton(
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: const Color(0xFF1A2632),
+              color: Theme.of(context).cardTheme.color,
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: const Color(0xFF4A9FFF)),
@@ -1236,8 +1236,8 @@ IconButton(
           const SizedBox(height: 8),
           Text(
             label,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 12,
             ),
           ),
@@ -1250,8 +1250,8 @@ IconButton(
     return Container(
       height: 80,
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-      decoration: const BoxDecoration(
-        color: Color(0xFF0A0E14),
+      decoration: BoxDecoration(
+        color: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -1286,7 +1286,7 @@ IconButton(
               ),
               child: Icon(
                 _isListening ? Icons.stop : Icons.mic,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onSurface,
                 size: 32,
               ),
             ).animate(onPlay: (c) => _isListening ? c.repeat() : null)
@@ -1322,7 +1322,7 @@ IconButton(
         ),
         child: Icon(
           icon,
-          color: isActive ? Colors.white : const Color(0xFF9DABB9),
+          color: isActive ? Colors.white : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
           size: 24,
         ),
       ),
@@ -1332,17 +1332,17 @@ IconButton(
     final shouldSend = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1A2632),
-        title: const Row(
+        backgroundColor: Theme.of(context).cardTheme.color,
+        title: Row(
           children: [
-            Icon(Icons.warning, color: Colors.red, size: 32),
-            SizedBox(width: 12),
-            Text('Manual SOS', style: TextStyle(color: Colors.white)),
+            const Icon(Icons.warning, color: Colors.red, size: 32),
+            const SizedBox(width: 12),
+            Text('Manual SOS', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
           ],
         ),
-        content: const Text(
+        content: Text(
           'Send emergency alert to all contacts?',
-          style: TextStyle(color: Color(0xFF9DABB9)),
+          style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
         ),
         actions: [
           TextButton(
@@ -1376,17 +1376,17 @@ IconButton(
     final shouldActivate = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF1A2632),
-        title: const Row(
+        backgroundColor: Theme.of(context).cardTheme.color,
+        title: Row(
           children: [
-            Icon(Icons.bedtime, color: Colors.purple, size: 32),
-            SizedBox(width: 12),
-            Text('Sleep Guardian', style: TextStyle(color: Colors.white)),
+            const Icon(Icons.bedtime, color: Colors.purple, size: 32),
+            const SizedBox(width: 12),
+            Text('Sleep Guardian', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
           ],
         ),
-        content: const Text(
+        content: Text(
           'Activate Sleep Guardian mode?\n\nThis will monitor for critical sounds while you sleep.',
-          style: TextStyle(color: Color(0xFF9DABB9)),
+          style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
         ),
         actions: [
           TextButton(

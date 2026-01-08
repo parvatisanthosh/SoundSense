@@ -41,6 +41,23 @@ class AppTheme {
   static const Color textTertiary = Color(0xFF808080);   // Medium gray
   static const Color textDisabled = Color(0xFF4D4D4D);   // Dark gray
   
+  // ============================================================
+  // LIGHT THEME COLORS
+  // ============================================================
+  
+  // Background Colors
+  static const Color backgroundLightPrimary = Color(0xFFF5F7FA);
+  static const Color backgroundLightSecondary = Color(0xFFFFFFFF);
+  static const Color backgroundLightTertiary = Color(0xFFE1E8ED);
+  
+  // Text Colors
+  static const Color textLightPrimary = Color(0xFF1A1A1A);
+  static const Color textLightSecondary = Color(0xFF657786);
+  static const Color textLightTertiary = Color(0xFFAAB8C2);
+  
+  // Border Colors
+  static const Color borderLightMode = Color(0xFFE1E8ED);
+  
   // Border Colors
   static const Color borderLight = Color(0xFF3D3D3D);
   static const Color borderMedium = Color(0xFF2D2D2D);
@@ -213,6 +230,144 @@ class AppTheme {
   // THEME DATA
   // ============================================================
   
+  static ThemeData get lightTheme => ThemeData(
+    brightness: Brightness.light,
+    primaryColor: primary,
+    scaffoldBackgroundColor: backgroundLightPrimary,
+    
+    // Color Scheme
+    colorScheme: const ColorScheme.light(
+      primary: primary,
+      secondary: accent,
+      surface: backgroundLightSecondary,
+      error: error,
+      onPrimary: Colors.white,
+      onSecondary: Colors.white,
+      onSurface: textLightPrimary,
+      onError: Colors.white,
+      background: backgroundLightPrimary,
+    ),
+    
+    // App Bar Theme
+    appBarTheme: AppBarTheme(
+      backgroundColor: backgroundLightPrimary,
+      elevation: 0,
+      centerTitle: true,
+      titleTextStyle: headlineMedium.copyWith(color: textLightPrimary),
+      iconTheme: const IconThemeData(color: textLightPrimary),
+    ),
+    
+    // Bottom Navigation Bar Theme
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: backgroundLightSecondary,
+      selectedItemColor: primary,
+      unselectedItemColor: textLightTertiary,
+      type: BottomNavigationBarType.fixed,
+      elevation: 10,
+    ),
+    
+    // Card Theme
+    cardTheme: CardThemeData(
+      color: backgroundLightSecondary,
+      elevation: 2,
+      shadowColor: Colors.black.withOpacity(0.05),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(radiusLG),
+      ),
+    ),
+    
+    // Input Decoration Theme
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: Colors.white,
+      hintStyle: bodyMedium.copyWith(color: textLightTertiary),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(radiusMD),
+        borderSide: const BorderSide(color: borderLightMode),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(radiusMD),
+        borderSide: const BorderSide(color: borderLightMode),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(radiusMD),
+        borderSide: const BorderSide(color: primary, width: 2),
+      ),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: spacingMD,
+        vertical: spacingMD,
+      ),
+    ),
+    
+    // Elevated Button Theme
+    elevatedButtonTheme: ElevatedButtonThemeData(
+      style: ElevatedButton.styleFrom(
+        backgroundColor: primary,
+        foregroundColor: Colors.white,
+        elevation: 2,
+        shadowColor: primary.withOpacity(0.3),
+        padding: const EdgeInsets.symmetric(
+          horizontal: spacingLG,
+          vertical: spacingMD,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radiusMD),
+        ),
+        textStyle: buttonText,
+      ),
+    ),
+    
+    // Text Button Theme
+    textButtonTheme: TextButtonThemeData(
+      style: TextButton.styleFrom(
+        foregroundColor: primary,
+        textStyle: buttonText,
+      ),
+    ),
+    
+    // Icon Theme
+    iconTheme: const IconThemeData(
+      color: textLightPrimary,
+      size: 24,
+    ),
+    
+    // Divider Theme
+    dividerTheme: const DividerThemeData(
+      color: borderLightMode,
+      thickness: 1,
+    ),
+    
+    // Dialog Theme
+    dialogTheme: DialogThemeData(
+      backgroundColor: backgroundLightSecondary,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(radiusXL),
+      ),
+      titleTextStyle: headlineMedium.copyWith(color: textLightPrimary),
+      contentTextStyle: bodyMedium.copyWith(color: textLightSecondary),
+    ),
+    
+    // Bottom Sheet Theme
+    bottomSheetTheme: const BottomSheetThemeData(
+      backgroundColor: backgroundLightSecondary,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(radiusXL)),
+      ),
+    ),
+    
+    // Switch Theme
+     switchTheme: SwitchThemeData(
+      thumbColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) return primary;
+        return textLightTertiary;
+      }),
+      trackColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) return primary.withOpacity(0.3);
+        return backgroundLightTertiary;
+      }),
+    ),
+  );
+
   static ThemeData get darkTheme => ThemeData(
     brightness: Brightness.dark,
     primaryColor: primary,

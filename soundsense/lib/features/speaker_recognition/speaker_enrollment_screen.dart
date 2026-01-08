@@ -139,10 +139,10 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F1419),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF1A2632),
-        title: const Text('Add Family Member'),
+        backgroundColor: Theme.of(context).cardTheme.color,
+        title: Text('Add Family Member', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -161,12 +161,12 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
           color: Color(0xFF4A9FFF),
         ),
         const SizedBox(height: 32),
-        const Text(
+        Text(
           'Add Family Member',
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 16),
@@ -174,7 +174,7 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
           'Enter the name of the person you want to add',
           style: TextStyle(
             fontSize: 16,
-            color: Colors.grey[400],
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
           ),
           textAlign: TextAlign.center,
         ),
@@ -183,14 +183,14 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
         // Name input
         TextField(
           controller: _nameController,
-          style: const TextStyle(color: Colors.white, fontSize: 18),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18),
           decoration: InputDecoration(
             labelText: 'Name',
-            labelStyle: TextStyle(color: Colors.grey[400]),
+            labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
             hintText: 'e.g., Mom, Dad, Rahul',
-            hintStyle: TextStyle(color: Colors.grey[600]),
+            hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
             filled: true,
-            fillColor: const Color(0xFF1A2632),
+            fillColor: Theme.of(context).cardTheme.color,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
               borderSide: BorderSide.none,
@@ -232,10 +232,10 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
         // Progress indicator
         Text(
           'Training: $_speakerName',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 32),
@@ -250,25 +250,25 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
               child: CircularProgressIndicator(
                 value: progress,
                 strokeWidth: 8,
-                backgroundColor: Colors.grey[800],
-                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF4A9FFF)),
+                backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4A9FFF)),
               ),
             ),
             Column(
               children: [
                 Text(
                   '$_samplesCollected/$_requiredSamples',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 Text(
                   'samples',
                   style: TextStyle(
                     fontSize: 16,
-                    color: Colors.grey[400],
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                   ),
                 ),
               ],
@@ -313,7 +313,7 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF1A2632),
+              color: Theme.of(context).cardTheme.color,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -321,15 +321,15 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
                 Text(
                   'Please read:',
                   style: TextStyle(
-                    color: Colors.grey[400],
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                     fontSize: 14,
                   ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   _trainingPhrases[_samplesCollected % _trainingPhrases.length],
-                  style: const TextStyle(
-                    color: Colors.white,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                   ),
@@ -364,9 +364,9 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
         // Cancel button
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text(
+          child: Text(
             'Cancel',
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
           ),
         ),
       ],

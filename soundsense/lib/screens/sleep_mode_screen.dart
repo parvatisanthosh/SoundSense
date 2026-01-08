@@ -63,7 +63,7 @@ class _SleepModeScreenState extends State<SleepModeScreen> with SingleTickerProv
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F1419),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -98,18 +98,18 @@ class _SleepModeScreenState extends State<SleepModeScreen> with SingleTickerProv
             child: Container(
               width: 48,
               height: 48,
-              decoration: const BoxDecoration(
-                color: Color(0xFF1A2632),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardTheme.color,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+              child: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface, size: 24),
             ),
           ),
           const SizedBox(width: 16),
-          const Text(
+          Text(
             'Sleep Guardian',
             style: TextStyle(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 28,
               fontWeight: FontWeight.bold,
             ),
@@ -132,7 +132,7 @@ class _SleepModeScreenState extends State<SleepModeScreen> with SingleTickerProv
               shape: BoxShape.circle,
               color: _isActive 
                   ? const Color(0xFF1A2632).withOpacity(0.5)
-                  : const Color(0xFF1A2632),
+                  : Theme.of(context).cardTheme.color,
               border: Border.all(
                 color: _isActive 
                     ? Color.lerp(
@@ -171,16 +171,16 @@ class _SleepModeScreenState extends State<SleepModeScreen> with SingleTickerProv
       margin: const EdgeInsets.symmetric(horizontal: 24),
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF1A2632),
+        color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Wake Methods',
             style: TextStyle(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 22,
               fontWeight: FontWeight.bold,
             ),
@@ -214,10 +214,10 @@ class _SleepModeScreenState extends State<SleepModeScreen> with SingleTickerProv
           const SizedBox(height: 32),
           
           // Critical Sounds Section
-          const Text(
+          Text(
             'Critical Sounds',
             style: TextStyle(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onSurface,
               fontSize: 22,
               fontWeight: FontWeight.bold,
             ),
@@ -252,7 +252,7 @@ class _SleepModeScreenState extends State<SleepModeScreen> with SingleTickerProv
                 );
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF0F1419),
+                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -288,8 +288,8 @@ class _SleepModeScreenState extends State<SleepModeScreen> with SingleTickerProv
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
                 ),
@@ -298,7 +298,7 @@ class _SleepModeScreenState extends State<SleepModeScreen> with SingleTickerProv
               Text(
                 subtitle,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                   fontSize: 14,
                 ),
               ),
@@ -323,7 +323,7 @@ class _SleepModeScreenState extends State<SleepModeScreen> with SingleTickerProv
                 height: 28,
                 margin: const EdgeInsets.symmetric(horizontal: 2),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).cardTheme.color,
                   shape: BoxShape.circle,
                 ),
                 child: value
@@ -356,7 +356,7 @@ class _SleepModeScreenState extends State<SleepModeScreen> with SingleTickerProv
         decoration: BoxDecoration(
           color: isSelected 
               ? const Color(0xFF4A9FFF).withOpacity(0.2)
-              : const Color(0xFF0F1419),
+              : Theme.of(context).scaffoldBackgroundColor,
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
             color: isSelected 
@@ -379,7 +379,7 @@ class _SleepModeScreenState extends State<SleepModeScreen> with SingleTickerProv
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? const Color(0xFF4A9FFF) : Colors.white,
+                color: isSelected ? const Color(0xFF4A9FFF) : Theme.of(context).colorScheme.onSurface,
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
               ),
@@ -394,8 +394,8 @@ class _SleepModeScreenState extends State<SleepModeScreen> with SingleTickerProv
     return Container(
       height: 80,
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-      decoration: const BoxDecoration(
-        color: Color(0xFF1A2632),
+      decoration: BoxDecoration(
+        color: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -421,7 +421,7 @@ class _SleepModeScreenState extends State<SleepModeScreen> with SingleTickerProv
         ),
         child: Icon(
           icon,
-          color: isActive ? Colors.white : const Color(0xFF9DABB9),
+          color: isActive ? Colors.white : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
           size: 28,
         ),
       ),
