@@ -36,7 +36,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
   Widget build(BuildContext context) {
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: AppTheme.backgroundPrimary,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: const Center(child: CircularProgressIndicator()),
       );
     }
@@ -44,15 +44,18 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
     final contacts = _sosService.emergencyContacts;
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundPrimary,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.backgroundPrimary,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: Icon(Icons.arrow_back_rounded, color: Theme.of(context).iconTheme.color),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(AppLocalizations.of(context)!.sosTitle, style: AppTheme.headlineMedium),
+        title: Text(
+          AppLocalizations.of(context)!.sosTitle, 
+          style: Theme.of(context).textTheme.headlineMedium,
+        ),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -77,8 +80,11 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddContactDialog,
         backgroundColor: AppTheme.primary,
-        icon: const Icon(Icons.person_add_rounded),
-        label: Text(AppLocalizations.of(context)!.sosAddButton),
+        icon: const Icon(Icons.person_add_rounded, color: Colors.white),
+        label: Text(
+          AppLocalizations.of(context)!.sosAddButton,
+          style: const TextStyle(color: Colors.white),
+        ),
       ),
     );
   }
@@ -156,17 +162,20 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(AppLocalizations.of(context)!.sosContactsHeader, style: AppTheme.headlineSmall),
+        Text(
+          AppLocalizations.of(context)!.sosContactsHeader, 
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: AppTheme.backgroundSecondary,
+            color: Theme.of(context).cardTheme.color,
             borderRadius: BorderRadius.circular(AppTheme.radiusSM),
           ),
           child: Text(
             '$count / 5',
-            style: AppTheme.labelMedium.copyWith(
-              color: count >= 5 ? AppTheme.warning : AppTheme.textSecondary,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: count >= 5 ? AppTheme.warning : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             ),
           ),
         ),
@@ -178,9 +187,9 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: AppTheme.backgroundSecondary,
+        color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(AppTheme.radiusXL),
-        border: Border.all(color: AppTheme.borderMedium),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Column(
         children: [
@@ -194,12 +203,15 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                 color: AppTheme.warning, size: 48),
           ),
           const SizedBox(height: 20),
-          Text(AppLocalizations.of(context)!.sosNoContacts, style: AppTheme.headlineSmall),
+          Text(
+            AppLocalizations.of(context)!.sosNoContacts, 
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
           const SizedBox(height: 8),
           Text(
             AppLocalizations.of(context)!.sosAddContactPrompt,
             textAlign: TextAlign.center,
-            style: AppTheme.bodyMedium,
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
         ],
       ),
@@ -211,9 +223,9 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.backgroundSecondary,
+        color: Theme.of(context).cardTheme.color,
         borderRadius: BorderRadius.circular(AppTheme.radiusLG),
-        border: Border.all(color: AppTheme.borderMedium),
+        border: Border.all(color: Theme.of(context).dividerColor),
       ),
       child: Row(
         children: [
@@ -236,9 +248,9 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(contact.name, style: AppTheme.labelLarge),
+                Text(contact.name, style: Theme.of(context).textTheme.labelLarge),
                 const SizedBox(height: 2),
-                Text(contact.phoneNumber, style: AppTheme.bodySmall),
+                Text(contact.phoneNumber, style: Theme.of(context).textTheme.bodySmall),
                 Row(
                   children: [
                     Container(
@@ -246,13 +258,12 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
-                        color: AppTheme.backgroundTertiary,
+                        color: Theme.of(context).scaffoldBackgroundColor,
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         contact.relationship,
-                        style:
-                            AppTheme.bodySmall.copyWith(fontSize: 10),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 10),
                       ),
                     ),
                   ],
@@ -287,8 +298,10 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
               const Icon(Icons.info_outline_rounded,
                   color: AppTheme.info, size: 20),
               const SizedBox(width: 10),
-              Text(AppLocalizations.of(context)!.sosHowItWorks,
-                  style: AppTheme.labelLarge.copyWith(color: AppTheme.info)),
+              Text(
+                AppLocalizations.of(context)!.sosHowItWorks,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(color: AppTheme.info),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -309,7 +322,12 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
           Text(emoji, style: const TextStyle(fontSize: 14)),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(text, style: AppTheme.bodySmall),
+            child: Text(
+              text, 
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+              )
+            ),
           ),
         ],
       ),
@@ -372,12 +390,12 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.backgroundSecondary,
+        backgroundColor: Theme.of(context).cardTheme.color,
         title: Row(
           children: [
             const Icon(Icons.science_rounded, color: AppTheme.info),
             const SizedBox(width: 10),
-            Text('Test SOS', style: AppTheme.headlineSmall),
+            Text('Test SOS', style: Theme.of(context).textTheme.headlineSmall),
           ],
         ),
         content: Column(
@@ -385,20 +403,20 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('This is a test. The following message would be sent:',
-                style: AppTheme.bodyMedium),
+                style: Theme.of(context).textTheme.bodyMedium),
             const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppTheme.backgroundTertiary,
+                color: Theme.of(context).scaffoldBackgroundColor,
                 borderRadius: BorderRadius.circular(AppTheme.radiusMD),
               ),
-              child: Text(message, style: AppTheme.bodySmall),
+              child: Text(message, style: Theme.of(context).textTheme.bodySmall),
             ),
             const SizedBox(height: 12),
             Text(
               'Recipients: ${contacts.map((c) => c.name).join(", ")}',
-              style: AppTheme.bodySmall.copyWith(color: AppTheme.textTertiary),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
             ),
           ],
         ),
@@ -425,7 +443,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppTheme.backgroundSecondary,
+      backgroundColor: Theme.of(context).cardTheme.color,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -446,18 +464,21 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppTheme.borderLight,
+                    color: Theme.of(context).dividerColor,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
               const SizedBox(height: 20),
-              Text(AppLocalizations.of(context)!.sosAddContactTitle, style: AppTheme.headlineMedium),
+              Text(
+                AppLocalizations.of(context)!.sosAddContactTitle, 
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
               const SizedBox(height: 20),
               TextField(
                 controller: nameController,
-                style: AppTheme.bodyLarge,
+                style: Theme.of(context).textTheme.bodyLarge,
                 decoration: InputDecoration(
                   labelText: AppLocalizations.of(context)!.sosNameLabel,
                   prefixIcon: const Icon(Icons.person_rounded),
@@ -467,20 +488,24 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
               TextField(
                 controller: phoneController,
                 keyboardType: TextInputType.phone,
-                style: AppTheme.bodyLarge,
+                style: Theme.of(context).textTheme.bodyLarge,
                 decoration: InputDecoration(
                   labelText: AppLocalizations.of(context)!.sosPhoneLabel,
                   prefixIcon: const Icon(Icons.phone_rounded),
                 ),
               ),
               const SizedBox(height: 16),
-              Text(AppLocalizations.of(context)!.sosRelationshipLabel, style: AppTheme.labelLarge),
+              Text(
+                AppLocalizations.of(context)!.sosRelationshipLabel, 
+                style: Theme.of(context).textTheme.labelLarge,
+              ),
               const SizedBox(height: 10),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: relationships.map((rel) {
                   final isSelected = selectedRelationship == rel;
+                  final isDark = Theme.of(context).brightness == Brightness.dark;
                   return GestureDetector(
                     onTap: () =>
                         setModalState(() => selectedRelationship = rel),
@@ -490,13 +515,13 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                       decoration: BoxDecoration(
                         color: isSelected
                             ? AppTheme.primary
-                            : AppTheme.backgroundTertiary,
+                            : Theme.of(context).scaffoldBackgroundColor,
                         borderRadius:
                             BorderRadius.circular(AppTheme.radiusXL),
                         border: Border.all(
                           color: isSelected
                               ? AppTheme.primary
-                              : AppTheme.borderMedium,
+                              : Theme.of(context).dividerColor,
                         ),
                       ),
                       child: Row(
@@ -507,10 +532,10 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                           const SizedBox(width: 6),
                           Text(
                             rel,
-                            style: AppTheme.labelMedium.copyWith(
+                            style: Theme.of(context).textTheme.labelMedium?.copyWith(
                               color: isSelected
                                   ? Colors.white
-                                  : AppTheme.textSecondary,
+                                  : Theme.of(context).textTheme.bodyMedium?.color,
                             ),
                           ),
                         ],
@@ -550,7 +575,10 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: Text(AppLocalizations.of(context)!.sosAddContactAction),
+                  child: Text(
+                    AppLocalizations.of(context)!.sosAddContactAction,
+                    style: const TextStyle(color: Colors.white),
+                  ),
                 ),
               ),
             ],
@@ -564,10 +592,15 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.backgroundSecondary,
-        title: Text(AppLocalizations.of(context)!.sosRemoveContactTitle, style: AppTheme.headlineSmall),
-        content: Text(AppLocalizations.of(context)!.sosRemoveContactConfirm(contact.name),
-            style: AppTheme.bodyMedium),
+        backgroundColor: Theme.of(context).cardTheme.color,
+        title: Text(
+          AppLocalizations.of(context)!.sosRemoveContactTitle, 
+          style: Theme.of(context).textTheme.headlineSmall,
+        ),
+        content: Text(
+          AppLocalizations.of(context)!.sosRemoveContactConfirm(contact.name),
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -575,8 +608,10 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text(AppLocalizations.of(context)!.sosRemoveAction,
-                style: AppTheme.labelMedium.copyWith(color: AppTheme.error)),
+            child: Text(
+              AppLocalizations.of(context)!.sosRemoveAction,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppTheme.error),
+            ),
           ),
         ],
       ),
@@ -592,7 +627,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
   void _showSnackbar(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: AppTheme.bodyMedium),
+        content: Text(message, style: const TextStyle(color: Colors.white)),
         backgroundColor: isError ? AppTheme.error : AppTheme.success,
         behavior: SnackBarBehavior.floating,
       ),

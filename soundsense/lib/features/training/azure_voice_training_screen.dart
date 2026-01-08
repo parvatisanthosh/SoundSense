@@ -5,6 +5,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:record/record.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/azure_speaker_service.dart';
+import '../../l10n/generated/app_localizations.dart';
 
 /// Voice Training Screen for Azure Speaker Recognition
 class AzureVoiceTrainingScreen extends StatefulWidget {
@@ -82,7 +83,7 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Voice Profiles',
+          AppLocalizations.of(context)!.voiceProfileTitle,
           style: TextStyle(
             color: Theme.of(context).colorScheme.onSurface,
             fontSize: 20,
@@ -117,6 +118,7 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.all(20),
+      // ... decoration ...
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -145,8 +147,8 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Azure Voice Recognition',
+                 Text(
+                   AppLocalizations.of(context)!.voiceProfileTitle, // Reused or can be specific
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -159,7 +161,7 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
                     const Icon(Icons.verified, color: Color(0xFF2ED573), size: 14),
                     const SizedBox(width: 4),
                     Text(
-                      'Microsoft AI • 95%+ Accuracy',
+                      'Microsoft AI • 95%+ Accuracy', // Brand name, kept English or can be localized if needed
                       style: TextStyle(
                         color: const Color(0xFF2ED573),
                         fontSize: 12,
@@ -180,7 +182,7 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Person\'s Name',
+          AppLocalizations.of(context)!.voiceProfileNameLabel,
           style: TextStyle(
             color: Theme.of(context).colorScheme.onSurface,
             fontSize: 16,
@@ -192,7 +194,7 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
           controller: _nameController,
           style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16),
           decoration: InputDecoration(
-            hintText: 'e.g., Mom, Dad, John',
+            hintText: AppLocalizations.of(context)!.voiceProfileNameHint,
             hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
             prefixIcon: Icon(Icons.person_rounded, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)),
             filled: true,
@@ -213,7 +215,7 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Relationship',
+          AppLocalizations.of(context)!.voiceProfileRelationshipLabel,
           style: TextStyle(
             color: Theme.of(context).colorScheme.onSurface,
             fontSize: 16,
@@ -226,6 +228,22 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
           runSpacing: 8,
           children: _relationships.map((rel) {
             final isSelected = _selectedRelationship == rel['name'];
+            String localizedRel = rel['name']!;
+            
+            // Map keys
+            switch(rel['name']) {
+              case 'Mom': localizedRel = AppLocalizations.of(context)!.relMom; break;
+              case 'Dad': localizedRel = AppLocalizations.of(context)!.relDad; break;
+              case 'Sister': localizedRel = AppLocalizations.of(context)!.relSister; break;
+              case 'Brother': localizedRel = AppLocalizations.of(context)!.relBrother; break;
+              case 'Spouse': localizedRel = AppLocalizations.of(context)!.relSpouse; break;
+              case 'Child': localizedRel = AppLocalizations.of(context)!.relChild; break;
+              case 'Friend': localizedRel = AppLocalizations.of(context)!.relFriend; break;
+              case 'Colleague': localizedRel = AppLocalizations.of(context)!.relColleague; break;
+              case 'Doctor': localizedRel = AppLocalizations.of(context)!.relDoctor; break;
+              case 'Other': localizedRel = AppLocalizations.of(context)!.relOther; break;
+            }
+
             return GestureDetector(
               onTap: () => setState(() => _selectedRelationship = rel['name']!),
               child: AnimatedContainer(
@@ -248,7 +266,7 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
                     Text(rel['emoji']!, style: const TextStyle(fontSize: 16)),
                     const SizedBox(width: 8),
                     Text(
-                      rel['name']!,
+                      localizedRel,
                       style: TextStyle(
                         color: isSelected ? Colors.white : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
@@ -289,8 +307,8 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
                     child: CircularProgressIndicator(
                         color: Colors.white, strokeWidth: 2),
                   )
-                : const Text(
-                    'Create Voice Profile',
+                : Text(
+                    AppLocalizations.of(context)!.voiceProfileCreateButton,
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -369,7 +387,7 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Training',
+                      AppLocalizations.of(context)!.voiceProfileTraining,
                       style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 14),
                     ),
                     Text(
@@ -390,12 +408,12 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
                     color: const Color(0xFF2ED573).withOpacity(0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
                       Icon(Icons.check_circle, color: Color(0xFF2ED573), size: 16),
                       SizedBox(width: 4),
                       Text(
-                        'Enrolled',
+                        AppLocalizations.of(context)!.voiceProfileEnrolled,
                         style: TextStyle(
                           color: Color(0xFF2ED573),
                           fontSize: 12,
@@ -416,8 +434,8 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Progress',
+                  Text(
+                    AppLocalizations.of(context)!.voiceProfileProgress,
                     style: TextStyle(color: Colors.white, fontSize: 14),
                   ),
                   Text(
@@ -484,8 +502,8 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
                 Expanded(
                   child: Text(
                     _isEnrolled
-                        ? 'Voice profile saved! This person can now be identified during live captions.'
-                        : 'Ask ${_nameController.text} to speak naturally for $_targetSeconds seconds in a quiet environment.',
+                        ? AppLocalizations.of(context)!.voiceProfileSuccess
+                        : AppLocalizations.of(context)!.voiceProfileInstructions(_nameController.text, _targetSeconds),
                     style: const TextStyle(
                       color: Color(0xFF4A9FFF),
                       fontSize: 14,
@@ -556,7 +574,7 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
                   });
                 },
                 icon: const Icon(Icons.add),
-                label: const Text('Add Another Person'),
+                label: Text(AppLocalizations.of(context)!.voiceProfileAddAnother),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2ED573),
                   padding: const EdgeInsets.symmetric(vertical: 14),
@@ -569,8 +587,8 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
             const SizedBox(height: 16),
             TextButton(
               onPressed: _cancelTraining,
-              child: const Text(
-                'Cancel',
+              child: Text(
+                AppLocalizations.of(context)!.settingsCancelAction,
                 style: TextStyle(color: Color(0xFFFF4757), fontSize: 14),
               ),
             ),
@@ -588,7 +606,7 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Saved Profiles',
+          AppLocalizations.of(context)!.voiceProfileSavedTitle,
           style: TextStyle(
             color: Theme.of(context).colorScheme.onSurface,
             fontSize: 18,
@@ -649,7 +667,7 @@ class _AzureVoiceTrainingScreenState extends State<AzureVoiceTrainingScreen>
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            profile.isEnrolled ? 'Ready' : 'Pending',
+                            profile.isEnrolled ? AppLocalizations.of(context)!.voiceProfileReady : AppLocalizations.of(context)!.voiceProfilePending,
                             style: TextStyle(
                               color: profile.isEnrolled
                                   ? const Color(0xFF2ED573)

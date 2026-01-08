@@ -46,35 +46,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // NEW: Sleep Guardian Section
-                    _buildSectionTitle('😴 Sleep Guardian'),
+                    _buildSectionTitle(AppLocalizations.of(context)!.settingsSectionSleep),
                     const SizedBox(height: 16),
                     _buildSleepGuardianCard(),
                     
                     const SizedBox(height: 32),
                     
                     // Sound Detection Section
-                    _buildSectionTitle('Sound Detection'),
+                    _buildSectionTitle(AppLocalizations.of(context)!.settingsSectionSound),
                     const SizedBox(height: 16),
                     _buildSoundDetectionCard(),
                     
                     const SizedBox(height: 32),
                     
                     // Alerts & Haptics Section
-                    _buildSectionTitle('Alerts & Haptics'),
+                    _buildSectionTitle(AppLocalizations.of(context)!.settingsSectionAlerts),
                     const SizedBox(height: 16),
                     _buildAlertsHapticsCard(),
                     
                     const SizedBox(height: 32),
                     
                     // Emergency Section
-                    _buildSectionTitle('Emergency'),
+                    _buildSectionTitle(AppLocalizations.of(context)!.settingsSectionEmergency),
                     const SizedBox(height: 16),
                     _buildEmergencyCard(),
                     
                     const SizedBox(height: 32),
                     
                     // General Section
-                    _buildSectionTitle('General'),
+                    _buildSectionTitle(AppLocalizations.of(context)!.settingsSectionGeneral),
                     const SizedBox(height: 16),
                     _buildGeneralCard(),
                     
@@ -128,10 +128,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 icon: Icons.bedtime,
                 iconColor: const Color(0xFF9C27B0),
                 iconBgColor: const Color(0xFF9C27B0).withOpacity(0.2),
-                title: 'Auto Sleep Mode',
+                title: AppLocalizations.of(context)!.settingsAutoSleep,
                 subtitle: status.isEnabled 
-                  ? 'Scheduled: ${status.schedule.toString()}'
-                  : 'Disabled',
+                  ? AppLocalizations.of(context)!.settingsAutoSleepScheduled(status.schedule.toString())
+                  : AppLocalizations.of(context)!.settingsAutoSleepDisabled,
                 value: status.isEnabled,
                 onChanged: (value) async {
                   await _sleepScheduler.toggleEnabled(value);
@@ -169,7 +169,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Schedule',
+            AppLocalizations.of(context)!.settingsSchedule,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
               fontSize: 12,
@@ -184,7 +184,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               Expanded(
                 child: Text(
-                  'Sleep Start',
+                  AppLocalizations.of(context)!.settingsSleepStart,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
                     fontSize: 16,
@@ -233,7 +233,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               Expanded(
                 child: Text(
-                  'Wake Up',
+                  AppLocalizations.of(context)!.settingsWakeUp,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
                     fontSize: 16,
@@ -325,8 +325,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(height: 4),
                 Text(
                   status.isSleepModeActive 
-                    ? 'Ends in $timeText'
-                    : 'Starts in $timeText',
+                    ? AppLocalizations.of(context)!.settingsSleepEndsIn(timeText)
+                    : AppLocalizations.of(context)!.settingsSleepStartsIn(timeText),
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                     fontSize: 12,
@@ -351,9 +351,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           final success = await _sleepScheduler.activateManualSleepMode();
           if (success && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Sleep mode activated manually'),
-                backgroundColor: Color(0xFF9C27B0),
+              SnackBar(
+                content: Text(AppLocalizations.of(context)!.settingsSleepModeActivated),
+                backgroundColor: const Color(0xFF9C27B0),
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -381,7 +381,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             const SizedBox(width: 12),
             Text(
-              isManualActive ? 'Deactivate Sleep Mode' : 'Activate Sleep Mode Now',
+              isManualActive 
+                  ? AppLocalizations.of(context)!.settingsDeactivateSleep 
+                  : AppLocalizations.of(context)!.settingsActivateSleep,
               style: TextStyle(
                 color: isManualActive ? Colors.orange : const Color(0xFF9C27B0),
                 fontSize: 16,
@@ -481,7 +483,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 SizedBox(height: 4),
                 Text(
-                  'Customize your experience',
+                  AppLocalizations.of(context)!.settingsSubtitle,
                   style: TextStyle(
                     color: Theme.of(context).textTheme.bodyMedium?.color,
                     fontSize: 14,
@@ -550,7 +552,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'LOW',
+                    AppLocalizations.of(context)!.settingsSensitivityLow,
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                       fontSize: 12,
@@ -559,7 +561,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                   Text(
-                    'HIGH',
+                    AppLocalizations.of(context)!.settingsSensitivityHigh,
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                       fontSize: 12,
@@ -619,7 +621,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: Text(
-                    'Active Detection',
+                    AppLocalizations.of(context)!.settingsActiveDetection,
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 16,
@@ -680,8 +682,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             icon: Icons.vibration,
             iconColor: const Color(0xFFFF8C42),
             iconBgColor: const Color(0xFFFF8C42).withOpacity(0.2),
-            title: 'Haptic Feedback',
-            subtitle: 'Vibrate on detection',
+            title: AppLocalizations.of(context)!.settingsHaptic,
+            subtitle: AppLocalizations.of(context)!.settingsHapticDesc,
             value: _settings.vibrationEnabled,
             onChanged: (value) async {
               await _settings.setVibrationEnabled(value);
@@ -695,8 +697,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             icon: Icons.record_voice_over,
             iconColor: const Color(0xFF1EA55B),
             iconBgColor: const Color(0xFF1EA55B).withOpacity(0.2),
-            title: 'Voice Alerts (TTS)',
-            subtitle: 'Speak detected sounds',
+            title: AppLocalizations.of(context)!.settingsVoice,
+            subtitle: AppLocalizations.of(context)!.settingsVoiceDesc,
             value: _settings.ttsEnabled,
             onChanged: (value) async {
               await _settings.setTTSEnabled(value);
@@ -710,8 +712,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             icon: Icons.flash_on,
             iconColor: const Color(0xFF9C27B0),
             iconBgColor: const Color(0xFF9C27B0).withOpacity(0.2),
-            title: 'Visual Flash',
-            subtitle: 'Screen flash alerts',
+            title: AppLocalizations.of(context)!.settingsFlash,
+            subtitle: AppLocalizations.of(context)!.settingsFlashDesc,
             value: _settings.importantAlerts,
             onChanged: (value) async {
               await _settings.setImportantAlerts(value);
@@ -770,7 +772,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Emergency Contacts',
+                          AppLocalizations.of(context)!.settingsEmergencyContacts,
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.onSurface,
                             fontSize: 16,
@@ -779,7 +781,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'Manage SOS contacts',
+                          AppLocalizations.of(context)!.settingsEmergencyContactsDesc,
                           style: TextStyle(
                             color: Theme.of(context).textTheme.bodyMedium?.color,
                             fontSize: 14,
@@ -819,8 +821,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             icon: _settings.isDarkMode ? Icons.dark_mode : Icons.light_mode,
             iconColor: const Color(0xFF4A9FFF),
             iconBgColor: const Color(0xFF4A9FFF).withOpacity(0.2),
-            title: _settings.isDarkMode ? AppLocalizations.of(context)!.settingsDarkMode : AppLocalizations.of(context)!.settingsDarkMode,
-            subtitle: _settings.isDarkMode ? 'On' : 'Off',
+            title: AppLocalizations.of(context)!.settingsDarkMode,
+            subtitle: _settings.isDarkMode 
+                ? AppLocalizations.of(context)!.settingsOn 
+                : AppLocalizations.of(context)!.settingsOff,
             value: _settings.isDarkMode,
             onChanged: (value) async {
               await _settings.setDarkMode(value);
@@ -869,7 +873,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          _settings.locale.languageCode == 'hi' ? 'Hindi' : 'English',
+                          _settings.locale.languageCode == 'hi' 
+                              ? AppLocalizations.of(context)!.settingsLanguageHindi 
+                              : AppLocalizations.of(context)!.settingsLanguageEnglish,
                           style: TextStyle(
                             color: Theme.of(context).textTheme.bodyMedium?.color,
                             fontSize: 14,
@@ -898,7 +904,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: Theme.of(context).scaffoldBackgroundColor,
-                borderRadius: BorderRadius.only(
+                borderRadius: const BorderRadius.only(
                   bottomLeft: Radius.circular(20),
                   bottomRight: Radius.circular(20),
                 ),
@@ -921,9 +927,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   const SizedBox(width: 16),
                   Expanded(
                     child: Text(
-                      'Reset Settings',
+                      AppLocalizations.of(context)!.settingsReset,
                       style: TextStyle(
-                        color: Color(0xFFFF4757),
+                        color: const Color(0xFFFF4757),
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
@@ -1056,18 +1062,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1A2632),
-        title: const Text(
-          'Reset Settings',
-          style: TextStyle(color: Colors.white),
+        title: Text(
+          AppLocalizations.of(context)!.settingsReset,
+          style: const TextStyle(color: Colors.white),
         ),
-        content: const Text(
-          'This will reset all settings to default values. Continue?',
-          style: TextStyle(color: Color(0xFF9DABB9)),
+        content: Text(
+          AppLocalizations.of(context)!.settingsResetConfirm,
+          style: const TextStyle(color: Color(0xFF9DABB9)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.settingsCancelAction),
           ),
           TextButton(
             onPressed: () async {
@@ -1075,9 +1081,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Navigator.pop(context);
               setState(() {});
             },
-            child: const Text(
-              'Reset',
-              style: TextStyle(color: Color(0xFFFF4757)),
+            child: Text(
+              AppLocalizations.of(context)!.settingsResetAction,
+              style: const TextStyle(color: Color(0xFFFF4757)),
             ),
           ),
         ],
@@ -1090,15 +1096,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1A2632),
-        title: const Text(
-          'Select Language',
-          style: TextStyle(color: Colors.white),
+        title: Text(
+          AppLocalizations.of(context)!.settingsSelectLanguage,
+          style: const TextStyle(color: Colors.white),
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              title: const Text('English', style: TextStyle(color: Colors.white)),
+              title: Text(AppLocalizations.of(context)!.settingsLanguageEnglish, style: const TextStyle(color: Colors.white)),
               leading: Radio<String>(
                 value: 'en',
                 groupValue: _settings.locale.languageCode,
@@ -1118,7 +1124,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
             ListTile(
-              title: const Text('Hindi', style: TextStyle(color: Colors.white)),
+              title: Text(AppLocalizations.of(context)!.settingsLanguageHindi, style: const TextStyle(color: Colors.white)),
               leading: Radio<String>(
                 value: 'hi',
                 groupValue: _settings.locale.languageCode,

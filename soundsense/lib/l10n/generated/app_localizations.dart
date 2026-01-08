@@ -506,6 +506,252 @@ abstract class AppLocalizations {
   /// **'Remove'**
   String get sosRemoveAction;
 
+  /// No description provided for @settingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize your experience'**
+  String get settingsSubtitle;
+
+  /// No description provided for @settingsSectionSleep.
+  ///
+  /// In en, this message translates to:
+  /// **'SLEEP GUARDIAN'**
+  String get settingsSectionSleep;
+
+  /// No description provided for @settingsSectionSound.
+  ///
+  /// In en, this message translates to:
+  /// **'SOUND DETECTION'**
+  String get settingsSectionSound;
+
+  /// No description provided for @settingsSectionAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'ALERTS & HAPTICS'**
+  String get settingsSectionAlerts;
+
+  /// No description provided for @settingsSectionEmergency.
+  ///
+  /// In en, this message translates to:
+  /// **'EMERGENCY'**
+  String get settingsSectionEmergency;
+
+  /// No description provided for @settingsSectionGeneral.
+  ///
+  /// In en, this message translates to:
+  /// **'GENERAL'**
+  String get settingsSectionGeneral;
+
+  /// No description provided for @settingsAutoSleep.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Sleep Mode'**
+  String get settingsAutoSleep;
+
+  /// No description provided for @settingsAutoSleepDisabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Disabled'**
+  String get settingsAutoSleepDisabled;
+
+  /// No description provided for @settingsAutoSleepScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduled: {schedule}'**
+  String settingsAutoSleepScheduled(Object schedule);
+
+  /// No description provided for @settingsActivateSleep.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate Sleep Mode Now'**
+  String get settingsActivateSleep;
+
+  /// No description provided for @settingsDeactivateSleep.
+  ///
+  /// In en, this message translates to:
+  /// **'Deactivate Sleep Mode'**
+  String get settingsDeactivateSleep;
+
+  /// No description provided for @settingsSleepModeActivated.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep mode activated manually'**
+  String get settingsSleepModeActivated;
+
+  /// No description provided for @settingsSchedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule'**
+  String get settingsSchedule;
+
+  /// No description provided for @settingsSleepStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep Start'**
+  String get settingsSleepStart;
+
+  /// No description provided for @settingsWakeUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Wake Up'**
+  String get settingsWakeUp;
+
+  /// No description provided for @settingsActiveDetection.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Detection'**
+  String get settingsActiveDetection;
+
+  /// No description provided for @settingsSensitivityLow.
+  ///
+  /// In en, this message translates to:
+  /// **'LOW'**
+  String get settingsSensitivityLow;
+
+  /// No description provided for @settingsSensitivityHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'HIGH'**
+  String get settingsSensitivityHigh;
+
+  /// No description provided for @settingsHaptic.
+  ///
+  /// In en, this message translates to:
+  /// **'Haptic Feedback'**
+  String get settingsHaptic;
+
+  /// No description provided for @settingsHapticDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Vibrate on detection'**
+  String get settingsHapticDesc;
+
+  /// No description provided for @settingsVoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice Alerts (TTS)'**
+  String get settingsVoice;
+
+  /// No description provided for @settingsVoiceDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Speak detected sounds'**
+  String get settingsVoiceDesc;
+
+  /// No description provided for @settingsFlash.
+  ///
+  /// In en, this message translates to:
+  /// **'Visual Flash'**
+  String get settingsFlash;
+
+  /// No description provided for @settingsFlashDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Screen flash alerts'**
+  String get settingsFlashDesc;
+
+  /// No description provided for @settingsEmergencyContacts.
+  ///
+  /// In en, this message translates to:
+  /// **'Emergency Contacts'**
+  String get settingsEmergencyContacts;
+
+  /// No description provided for @settingsEmergencyContactsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage SOS contacts'**
+  String get settingsEmergencyContactsDesc;
+
+  /// No description provided for @settingsOn.
+  ///
+  /// In en, this message translates to:
+  /// **'On'**
+  String get settingsOn;
+
+  /// No description provided for @settingsOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get settingsOff;
+
+  /// No description provided for @settingsReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset Settings'**
+  String get settingsReset;
+
+  /// No description provided for @settingsResetDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore default settings'**
+  String get settingsResetDesc;
+
+  /// No description provided for @settingsResetConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to reset all settings to default?'**
+  String get settingsResetConfirm;
+
+  /// No description provided for @settingsResetAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get settingsResetAction;
+
+  /// No description provided for @settingsCancelAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get settingsCancelAction;
+
+  /// No description provided for @settingsSelectLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Language'**
+  String get settingsSelectLanguage;
+
+  /// No description provided for @settingsLanguageHindi.
+  ///
+  /// In en, this message translates to:
+  /// **'Hindi'**
+  String get settingsLanguageHindi;
+
+  /// No description provided for @settingsLanguageEnglish.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get settingsLanguageEnglish;
+
+  /// No description provided for @settingsModeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System Default'**
+  String get settingsModeSystem;
+
+  /// No description provided for @settingsModeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light Mode'**
+  String get settingsModeLight;
+
+  /// No description provided for @settingsModeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark Mode'**
+  String get settingsModeDark;
+
+  /// No description provided for @settingsSleepStartsIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Starts in {time}'**
+  String settingsSleepStartsIn(Object time);
+
+  /// No description provided for @settingsSleepEndsIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Ends in {time}'**
+  String settingsSleepEndsIn(Object time);
+
   /// No description provided for @sosCountSeconds.
   ///
   /// In en, this message translates to:
@@ -559,6 +805,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Call Emergency Services (112)'**
   String get sosCallEmergency;
+
+  /// No description provided for @dashboardManualSosTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual SOS'**
+  String get dashboardManualSosTitle;
+
+  /// No description provided for @dashboardManualSosContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Send emergency alert to all contacts?'**
+  String get dashboardManualSosContent;
+
+  /// No description provided for @dashboardManualSosAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Send SOS'**
+  String get dashboardManualSosAction;
+
+  /// No description provided for @dashboardSleepGuardianTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep Guardian'**
+  String get dashboardSleepGuardianTitle;
+
+  /// No description provided for @dashboardSleepGuardianContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate Sleep Guardian mode?\n\nThis will monitor for critical sounds while you sleep.'**
+  String get dashboardSleepGuardianContent;
+
+  /// No description provided for @dashboardSleepGuardianAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Activate'**
+  String get dashboardSleepGuardianAction;
+
+  /// No description provided for @dashboardStopListeningFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'⚠️ Stop listening first'**
+  String get dashboardStopListeningFirst;
 
   /// No description provided for @spkTitle.
   ///
@@ -649,6 +937,264 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'3. The app will record for 3 seconds'**
   String get spkInstruction3;
+
+  /// No description provided for @feedbackCorrect.
+  ///
+  /// In en, this message translates to:
+  /// **'Correct'**
+  String get feedbackCorrect;
+
+  /// No description provided for @feedbackWrong.
+  ///
+  /// In en, this message translates to:
+  /// **'Wrong'**
+  String get feedbackWrong;
+
+  /// No description provided for @feedbackDismiss.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss (Don\'t show again)'**
+  String get feedbackDismiss;
+
+  /// No description provided for @feedbackTrain.
+  ///
+  /// In en, this message translates to:
+  /// **'Train This Sound'**
+  String get feedbackTrain;
+
+  /// No description provided for @feedbackThanks.
+  ///
+  /// In en, this message translates to:
+  /// **'✓ Thanks! I\'ll remember this'**
+  String get feedbackThanks;
+
+  /// No description provided for @feedbackNoted.
+  ///
+  /// In en, this message translates to:
+  /// **'✓ Noted! I\'ll improve'**
+  String get feedbackNoted;
+
+  /// No description provided for @sosSentSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'✓ SOS Sent!'**
+  String get sosSentSuccess;
+
+  /// No description provided for @dashboardStatusSounds.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} sounds'**
+  String dashboardStatusSounds(Object count);
+
+  /// No description provided for @dashboardStatusTranscripts.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} transcripts'**
+  String dashboardStatusTranscripts(Object count);
+
+  /// No description provided for @voiceProfileTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice Profiles'**
+  String get voiceProfileTitle;
+
+  /// No description provided for @voiceProfileNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Person\'s Name'**
+  String get voiceProfileNameLabel;
+
+  /// No description provided for @voiceProfileNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g., Mom, Dad, John'**
+  String get voiceProfileNameHint;
+
+  /// No description provided for @voiceProfileRelationshipLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Relationship'**
+  String get voiceProfileRelationshipLabel;
+
+  /// No description provided for @voiceProfileCreateButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Voice Profile'**
+  String get voiceProfileCreateButton;
+
+  /// No description provided for @voiceProfileSavedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved Profiles'**
+  String get voiceProfileSavedTitle;
+
+  /// No description provided for @voiceProfileAddAnother.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Another Person'**
+  String get voiceProfileAddAnother;
+
+  /// No description provided for @voiceProfileTraining.
+  ///
+  /// In en, this message translates to:
+  /// **'Training'**
+  String get voiceProfileTraining;
+
+  /// No description provided for @voiceProfileProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress'**
+  String get voiceProfileProgress;
+
+  /// No description provided for @voiceProfileEnrolled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enrolled'**
+  String get voiceProfileEnrolled;
+
+  /// No description provided for @voiceProfileReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready'**
+  String get voiceProfileReady;
+
+  /// No description provided for @voiceProfilePending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get voiceProfilePending;
+
+  /// No description provided for @voiceProfileInstructions.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask {name} to speak naturally for {seconds} seconds in a quiet environment.'**
+  String voiceProfileInstructions(Object name, Object seconds);
+
+  /// No description provided for @voiceProfileSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice profile saved! This person can now be identified during live captions.'**
+  String get voiceProfileSuccess;
+
+  /// No description provided for @transcriptionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dhwani Live'**
+  String get transcriptionTitle;
+
+  /// No description provided for @transcriptionReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to listen'**
+  String get transcriptionReady;
+
+  /// No description provided for @transcriptionListening.
+  ///
+  /// In en, this message translates to:
+  /// **'Listening now'**
+  String get transcriptionListening;
+
+  /// No description provided for @transcriptionPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap microphone to start'**
+  String get transcriptionPrompt;
+
+  /// No description provided for @transcriptionRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Captions'**
+  String get transcriptionRecent;
+
+  /// No description provided for @transcriptionClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get transcriptionClear;
+
+  /// No description provided for @transcriptionEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No captions yet'**
+  String get transcriptionEmpty;
+
+  /// No description provided for @transcriptionMute.
+  ///
+  /// In en, this message translates to:
+  /// **'Mute'**
+  String get transcriptionMute;
+
+  /// No description provided for @transcriptionSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Size'**
+  String get transcriptionSize;
+
+  /// No description provided for @transcriptionSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get transcriptionSave;
+
+  /// No description provided for @relMom.
+  ///
+  /// In en, this message translates to:
+  /// **'Mom'**
+  String get relMom;
+
+  /// No description provided for @relDad.
+  ///
+  /// In en, this message translates to:
+  /// **'Dad'**
+  String get relDad;
+
+  /// No description provided for @relSister.
+  ///
+  /// In en, this message translates to:
+  /// **'Sister'**
+  String get relSister;
+
+  /// No description provided for @relBrother.
+  ///
+  /// In en, this message translates to:
+  /// **'Brother'**
+  String get relBrother;
+
+  /// No description provided for @relSpouse.
+  ///
+  /// In en, this message translates to:
+  /// **'Spouse'**
+  String get relSpouse;
+
+  /// No description provided for @relChild.
+  ///
+  /// In en, this message translates to:
+  /// **'Child'**
+  String get relChild;
+
+  /// No description provided for @relFriend.
+  ///
+  /// In en, this message translates to:
+  /// **'Friend'**
+  String get relFriend;
+
+  /// No description provided for @relColleague.
+  ///
+  /// In en, this message translates to:
+  /// **'Colleague'**
+  String get relColleague;
+
+  /// No description provided for @relDoctor.
+  ///
+  /// In en, this message translates to:
+  /// **'Doctor'**
+  String get relDoctor;
+
+  /// No description provided for @relOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get relOther;
 }
 
 class _AppLocalizationsDelegate

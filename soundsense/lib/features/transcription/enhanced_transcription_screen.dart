@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/services/azure_speech_service.dart';
 import '../../core/services/pyannote_api_service.dart'; // ✅ NEW: Pyannote instead of Azure speaker service
 import '../../core/config/env_config.dart';
+import '../../l10n/generated/app_localizations.dart';
 
 /// Modern Live Captions Screen with Pyannote Speaker Identification
 class EnhancedTranscriptionScreen extends StatefulWidget {
@@ -344,7 +345,7 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _isListening ? 'Listening now' : 'Ready to listen',
+                  _isListening ? AppLocalizations.of(context)!.transcriptionListening : AppLocalizations.of(context)!.transcriptionReady,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                     fontSize: 14,
@@ -352,7 +353,7 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  'Dhwani Live',
+                  AppLocalizations.of(context)!.transcriptionTitle,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 24,
@@ -412,7 +413,7 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
               ),
               const SizedBox(height: 20),
               Text(
-                'Select Language',
+                AppLocalizations.of(context)!.settingsSelectLanguage,
                   style: TextStyle(
                   color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 20,
@@ -499,7 +500,7 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // ✅ NEW: Show current speaker name
+              // Show current speaker name
               if (_currentSpeakerName != null && _isListening)
                 Container(
                   margin: const EdgeInsets.only(bottom: 16),
@@ -537,7 +538,7 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
               // Caption text
               displayText.isEmpty
                   ? Text(
-                      _isListening ? 'Start speaking...' : 'Tap microphone to start',
+                      _isListening ? 'Start speaking...' : AppLocalizations.of(context)!.transcriptionPrompt,
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
@@ -584,17 +585,17 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
         children: [
           _buildActionButton(
             icon: _isMuted ? Icons.mic_off : Icons.volume_off,
-            label: 'Mute',
+            label: AppLocalizations.of(context)!.transcriptionMute,
             onTap: () => setState(() => _isMuted = !_isMuted),
           ),
           _buildActionButton(
             icon: Icons.text_fields,
-            label: 'Size',
+            label: AppLocalizations.of(context)!.transcriptionSize,
             onTap: () => setState(() => _fontSize = _fontSize == 1.0 ? 1.5 : 1.0),
           ),
           _buildActionButton(
             icon: Icons.history,
-            label: 'Save',
+            label: AppLocalizations.of(context)!.transcriptionSave,
             onTap: _saveCurrentCaption,
           ),
         ],
@@ -645,7 +646,7 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Recent Captions',
+                    AppLocalizations.of(context)!.transcriptionRecent,
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.onSurface,
                       fontSize: 22,
@@ -664,7 +665,7 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
                         children: [
                           Icon(Icons.delete_outline, color: Theme.of(context).colorScheme.onSurface, size: 18),
                           const SizedBox(width: 4),
-                          Text('Clear', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14)),
+                          Text(AppLocalizations.of(context)!.transcriptionClear, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 14)),
                         ],
                       ),
                     ),
@@ -676,7 +677,7 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
               child: _transcriptEntries.isEmpty
                   ? Center(
                       child: Text(
-                        'No captions yet',
+                        AppLocalizations.of(context)!.transcriptionEmpty,
                         style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3), fontSize: 16),
                       ),
                     )
