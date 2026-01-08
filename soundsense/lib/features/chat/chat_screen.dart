@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/services/chat_service.dart';
+import '../../core/services/azure_chat_service.dart';
 
 import '../../core/services/sound_intelligence_hub.dart';
 import '../../shared/widgets/sound_sense_bottom_nav_bar.dart';
@@ -16,7 +16,7 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final ChatService _chatService = ChatService();
+  final AzureChatService _chatService = AzureChatService();
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
@@ -142,7 +142,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'Online • Gemini AI',
+                      'Online • Azure OpenAI',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.success),
                     ),
                   ],
@@ -411,7 +411,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _clearChat() {
     setState(() {
-      _messages.clear();
+      _messages.clear(); // ✅ FIXED: Clear messages first
+      _chatService.clearHistory(); // Then clear service history
       _messages.add(ChatMessage(
         text:
             "Chat cleared! 🧹 I'm ready to help you with anything. What would you like to know?",

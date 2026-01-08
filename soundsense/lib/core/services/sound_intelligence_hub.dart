@@ -21,9 +21,16 @@ import '../../core/services/azure_speech_service.dart';
 /// Shows WHO is speaking, WHAT they're saying, and WHAT sounds are detected
 class SoundIntelligenceHub {
   // Singleton pattern
+  
   static final SoundIntelligenceHub _instance = SoundIntelligenceHub._internal();
   factory SoundIntelligenceHub() => _instance;
   SoundIntelligenceHub._internal();
+
+  //new
+  DateTime? _lastSOSTime;
+  DateTime? _lastSleepAlertTime;
+  static const _sosCooldown = Duration(minutes: 5); // No SOS for 5 mins after one is sent
+  static const _sleepAlertCooldown = Duration(seconds: 30);
 
   // Services
   final AudioService _audioService = AudioService();
@@ -584,6 +591,13 @@ Future<void> _processAudioData(List<double> audioData) async {
 Future<void> _checkEmergencyTrigger(SmartSoundEvent event) async {
   // ✅ Sleep mode: Only trigger for ACTUAL emergency sounds
   if (_currentMode == ListeningMode.sleepMode && event.priority == 'critical') {
+    // Check cooldown for sleep alerts
+    if (_lastSleepAlertTime != null && 
+        DateTime.now().difference(_lastSleepAlertTime!) < _sleepAlertCooldown) {
+      debugPrint('😴 Sleep alert on cooldown, skipping...');
+      return;
+    }
+    
     // ✅ Filter out false positives - only real emergency sounds
     final soundName = event.soundName.toLowerCase();
     final isRealEmergency = soundName.contains('alarm') ||
@@ -598,6 +612,7 @@ Future<void> _checkEmergencyTrigger(SmartSoundEvent event) async {
     
     if (isRealEmergency) {
       debugPrint('😴 Sleep mode: REAL critical sound detected - ${event.soundName}');
+      _lastSleepAlertTime = DateTime.now(); // Set cooldown
       
       if (_sleepMode != null) {
         await _sleepMode!.triggerCriticalSoundAlert(event.soundName);
@@ -607,7 +622,14 @@ Future<void> _checkEmergencyTrigger(SmartSoundEvent event) async {
     }
   }
   
-  // ✅ Continue with normal SOS logic (works in both normal AND sleep mode)
+  // ✅ SOS Check with cooldown
+  // Check cooldown for SOS
+  if (_lastSOSTime != null && 
+      DateTime.now().difference(_lastSOSTime!) < _sosCooldown) {
+    debugPrint('🚨 SOS on cooldown (${_sosCooldown.inMinutes} min), skipping...');
+    return;
+  }
+  
   debugPrint('🔍 SOS Check: Event "${event.soundName}" with priority ${event.priority}');
   
   final recentCritical = _soundHistory
@@ -618,8 +640,8 @@ Future<void> _checkEmergencyTrigger(SmartSoundEvent event) async {
   
   debugPrint('🔍 SOS Check: Found ${recentCritical.length} recent critical sounds');
   
-  if (recentCritical.length < 1) {
-    debugPrint('⚠️ SOS: Need critical sound, only have ${recentCritical.length}');
+  if (recentCritical.length < 2) {  // Changed back to 2 for safety
+    debugPrint('⚠️ SOS: Need 2 critical sounds, only have ${recentCritical.length}');
     return;
   }
   
@@ -628,6 +650,7 @@ Future<void> _checkEmergencyTrigger(SmartSoundEvent event) async {
   final soundNames = recentCritical.map((s) => s.soundName).toList();
   if (_sos.shouldTriggerSOS(soundNames)) {
     debugPrint('🚨 SOS TRIGGER CONDITIONS MET!');
+    _lastSOSTime = DateTime.now(); // Set SOS cooldown
     
     _emergencyController.add(EmergencyEvent(
       type: EmergencyType.autoDetected,
@@ -723,13 +746,23 @@ Future<void> _checkEmergencyTrigger(SmartSoundEvent event) async {
     _saveLearnedPreferences();
   }
 
-  void _addToHistory(SmartSoundEvent event) {
-    _soundHistory.insert(0, event);
-    
-    if (_soundHistory.length > _maxHistorySize) {
-      _soundHistory.removeRange(_maxHistorySize, _soundHistory.length);
-    }
+ void _addToHistory(SmartSoundEvent event) {
+  // Check if we just added the same sound within last 3 seconds
+  final isDuplicate = _soundHistory.isNotEmpty &&
+      _soundHistory.first.soundName == event.soundName &&
+      DateTime.now().difference(_soundHistory.first.timestamp).inSeconds < 3;
+  
+  if (isDuplicate) {
+    debugPrint('🔄 Skipping duplicate sound: ${event.soundName}');
+    return;
   }
+  
+  _soundHistory.insert(0, event);
+  
+  if (_soundHistory.length > _maxHistorySize) {
+    _soundHistory.removeRange(_maxHistorySize, _soundHistory.length);
+  }
+}
 
   /// Sleep mode
   Future<void> _activateSleepMode() async {
