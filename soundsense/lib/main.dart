@@ -12,22 +12,15 @@ import 'features/dashboard/dashboard_screen.dart';
 import 'features/training/sound_training_screen.dart';
 import 'features/training/azure_voice_training_screen.dart';
 import 'features/transcription/enhanced_transcription_screen.dart';
-<<<<<<< HEAD
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-=======
 import 'features/settings/settings_screen.dart';
 import 'features/chat/chat_screen.dart';
 // Friend's SOS feature
 import 'features/sos/emergency_contacts_screen.dart';
 import 'features/speaker_recognition/speaker_recognition_screen.dart';
->>>>>>> vedant-pr
 
 void main() async {
    
   WidgetsFlutterBinding.ensureInitialized();
-<<<<<<< HEAD
-  await dotenv.load(fileName: ".env");
-=======
   
   // Load environment variables
   await dotenv.load(fileName: ".env");
@@ -44,7 +37,6 @@ void main() async {
   print('🚀 Initializing Dhwani...');
   
   // 1. Initialize settings
->>>>>>> vedant-pr
   await SettingsService().init();
   print('✅ Settings initialized');
   
