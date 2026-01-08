@@ -1,12 +1,12 @@
 import 'dart:typed_data';
+import 'dart:math' show sqrt;
 import '../models/voice_profile_model.dart';
-import 'embedding_service.dart';
+import 'pyannote_api_service.dart';
 import 'training_database.dart';
 
 /// Service for training and identifying speakers
 class SpeakerIdentificationService {
-  final VoiceEmbeddingService _voiceEmbeddingService = VoiceEmbeddingService();
-  final EmbeddingService _embeddingService = EmbeddingService.instance;
+  final PyannoteApiService _apiService = PyannoteApiService.instance;
   final TrainingDatabase _database = TrainingDatabase.instance;
   
   List<VoiceProfile> _voiceProfiles = [];
@@ -24,7 +24,13 @@ class SpeakerIdentificationService {
   Future<void> initialize() async {
     if (_isInitialized) return;
     
-    await _embeddingService.initialize();
+    // Check API health
+    final isHealthy = await _apiService.checkHealth();
+    if (!isHealthy) {
+      print('⚠️ Warning: Pyannote API server is not responding');
+      // Don't throw - allow offline mode
+    }
+    
     await _database.initialize();
     _voiceProfiles = await _database.getAllVoiceProfiles();
     _isInitialized = true;
@@ -40,14 +46,14 @@ class SpeakerIdentificationService {
     required String name,
     required String relationship,
     String? emoji,
-    int requiredSamples = 5,
+    int requiredSamples = 3,
   }) {
     return VoiceTrainingSession(
       name: name,
       relationship: relationship,
       emoji: emoji ?? Relationship.getEmoji(relationship),
       requiredSamples: requiredSamples,
-      voiceEmbeddingService: _voiceEmbeddingService,
+      apiService: _apiService,
       onComplete: _saveVoiceProfile,
     );
   }
@@ -65,8 +71,7 @@ class SpeakerIdentificationService {
     _voiceProfiles.removeWhere((p) => p.id == id);
   }
 
-  /// Identify speaker from audio
-  /// Returns the best matching profile if confidence is above threshold
+  /// Identify speaker from audio using Pyannote API
   Future<SpeakerIdentificationResult> identifySpeaker(
     Uint8List audioData, {
     double threshold = 0.70,
@@ -79,37 +84,46 @@ class SpeakerIdentificationService {
       );
     }
 
-    // Generate voice embedding for query audio
-    final queryEmbedding = await _voiceEmbeddingService.generateVoiceEmbedding(audioData);
+    // Call Pyannote API
+    final result = await _apiService.recognizeSpeaker(audioData);
     
-    VoiceProfile? bestMatch;
-    double bestScore = 0.0;
-
-    for (final profile in _voiceProfiles) {
-      if (!profile.isActive) continue;
-      
-      // Compare with all stored embeddings
-      for (final storedEmbedding in profile.voiceEmbeddings) {
-        final similarity = _cosineSimilarity(queryEmbedding, storedEmbedding);
-        
-        if (similarity > bestScore) {
-          bestScore = similarity;
-          bestMatch = profile;
-        }
-      }
+    if (result == null) {
+      return SpeakerIdentificationResult(
+        speaker: null,
+        confidence: 0.0,
+        isUnknown: true,
+      );
     }
 
-    if (bestMatch != null && bestScore >= threshold) {
-      return SpeakerIdentificationResult(
-        speaker: bestMatch,
-        confidence: bestScore,
-        isUnknown: false,
-      );
+    final bool identified = result['identified'] ?? false;
+    final String? speakerName = result['name'];
+    final double confidence = (result['confidence'] ?? 0.0).toDouble();
+
+    if (identified && speakerName != null) {
+      // Find matching profile
+      try {
+        final profile = _voiceProfiles.firstWhere(
+          (p) => p.name == speakerName,
+        );
+        
+        return SpeakerIdentificationResult(
+          speaker: profile,
+          confidence: confidence,
+          isUnknown: false,
+        );
+      } catch (e) {
+        print('⚠️ Profile not found locally for: $speakerName');
+        return SpeakerIdentificationResult(
+          speaker: null,
+          confidence: confidence,
+          isUnknown: true,
+        );
+      }
     }
 
     return SpeakerIdentificationResult(
       speaker: null,
-      confidence: bestScore,
+      confidence: confidence,
       isUnknown: true,
     );
   }
@@ -196,43 +210,21 @@ class SpeakerIdentificationService {
     final index = _voiceProfiles.indexWhere((p) => p.id == profileId);
     if (index == -1) return;
 
-    final embedding = await _voiceEmbeddingService.generateVoiceEmbedding(audioData);
     final profile = _voiceProfiles[index];
     
-    final updatedProfile = profile.copyWith(
-      voiceEmbeddings: [...profile.voiceEmbeddings, embedding],
-      sampleCount: profile.sampleCount + 1,
-    );
+    // Enroll additional sample to API
+    final result = await _apiService.enrollSpeaker(profile.name, audioData);
     
-    await updateVoiceProfile(updatedProfile);
-  }
-
-  /// Cosine similarity calculation
-  double _cosineSimilarity(List<double> a, List<double> b) {
-    if (a.length != b.length) return 0.0;
-    
-    double dot = 0.0;
-    double normA = 0.0;
-    double normB = 0.0;
-    
-    for (int i = 0; i < a.length; i++) {
-      dot += a[i] * b[i];
-      normA += a[i] * a[i];
-      normB += b[i] * b[i];
+    if (result != null) {
+      final updatedProfile = profile.copyWith(
+        sampleCount: profile.sampleCount + 1,
+      );
+      
+      await updateVoiceProfile(updatedProfile);
+      print('✅ Added training sample for ${profile.name}');
+    } else {
+      print('❌ Failed to add training sample');
     }
-    
-    if (normA == 0 || normB == 0) return 0.0;
-    
-    return dot / (sqrt(normA) * sqrt(normB));
-  }
-
-  double sqrt(double x) {
-    if (x <= 0) return 0;
-    double guess = x / 2;
-    for (int i = 0; i < 10; i++) {
-      guess = (guess + x / guess) / 2;
-    }
-    return guess;
   }
 }
 
@@ -243,10 +235,10 @@ class VoiceTrainingSession {
   final String relationship;
   final String emoji;
   final int requiredSamples;
-  final VoiceEmbeddingService _voiceEmbeddingService;
+  final PyannoteApiService _apiService;
   final Function(VoiceProfile) _onComplete;
 
-  final List<List<double>> _collectedEmbeddings = [];
+  int _samplesCollected = 0;
   final List<double> _pitchSamples = [];
   final List<double> _energySamples = [];
   bool _isComplete = false;
@@ -256,13 +248,13 @@ class VoiceTrainingSession {
     required this.relationship,
     required this.emoji,
     required this.requiredSamples,
-    required VoiceEmbeddingService voiceEmbeddingService,
+    required PyannoteApiService apiService,
     required Function(VoiceProfile) onComplete,
-  })  : _voiceEmbeddingService = voiceEmbeddingService,
+  })  : _apiService = apiService,
         _onComplete = onComplete;
 
   /// Number of samples collected
-  int get samplesCollected => _collectedEmbeddings.length;
+  int get samplesCollected => _samplesCollected;
 
   /// Number of samples remaining
   int get samplesRemaining => requiredSamples - samplesCollected;
@@ -275,7 +267,7 @@ class VoiceTrainingSession {
 
   /// Phrases to read during training
   static List<String> get trainingPhrases => [
-    "Hello, my name is ${DateTime.now().second}",
+    "Hello, my name is speaking now",
     "The quick brown fox jumps over the lazy dog",
     "I am recording my voice for Dhwani",
     "This app will help identify who is speaking",
@@ -302,16 +294,22 @@ class VoiceTrainingSession {
       return false;
     }
 
-    final embedding = await _voiceEmbeddingService.generateVoiceEmbedding(audioData);
+    // Send to Pyannote API for enrollment
+    final result = await _apiService.enrollSpeaker(name, audioData);
     
-    _collectedEmbeddings.add(embedding);
+    if (result == null) {
+      print('❌ Failed to enroll sample');
+      return false;
+    }
+
+    _samplesCollected++;
     
-    // Extract voice characteristics
+    // Extract voice characteristics for local storage
     final features = _extractFeatures(audioData);
     _pitchSamples.add(features['pitch'] ?? 0);
     _energySamples.add(features['energy'] ?? 0);
     
-    print('✅ Voice sample ${samplesCollected}/$requiredSamples collected');
+    print('✅ Voice sample $_samplesCollected/$requiredSamples enrolled on server');
 
     if (samplesCollected >= requiredSamples) {
       await _finishTraining();
@@ -381,9 +379,9 @@ class VoiceTrainingSession {
       name: name,
       relationship: relationship,
       emoji: emoji,
-      voiceEmbeddings: _collectedEmbeddings,
+      voiceEmbeddings: [], // Embeddings stored on server
       createdAt: DateTime.now(),
-      sampleCount: _collectedEmbeddings.length,
+      sampleCount: _samplesCollected,
       averagePitch: avgPitch,
       averageEnergy: avgEnergy,
     );
@@ -394,9 +392,72 @@ class VoiceTrainingSession {
 
   /// Cancel training
   void cancel() {
-    _collectedEmbeddings.clear();
+    _samplesCollected = 0;
     _pitchSamples.clear();
     _energySamples.clear();
     _isComplete = true;
   }
+}
+
+
+/// Result of speaker identification
+class SpeakerIdentificationResult {
+  final VoiceProfile? speaker;
+  final double confidence;
+  final bool isUnknown;
+
+  SpeakerIdentificationResult({
+    required this.speaker,
+    required this.confidence,
+    required this.isUnknown,
+  });
+
+  @override
+  String toString() {
+    if (isUnknown) {
+      return 'Unknown speaker (confidence: ${(confidence * 100).toStringAsFixed(1)}%)';
+    }
+    return '${speaker?.name} (confidence: ${(confidence * 100).toStringAsFixed(1)}%)';
+  }
+}
+
+
+/// Relationship types and their emojis
+class Relationship {
+  static const String mother = 'Mother';
+  static const String father = 'Father';
+  static const String sibling = 'Sibling';
+  static const String grandparent = 'Grandparent';
+  static const String friend = 'Friend';
+  static const String caregiver = 'Caregiver';
+  static const String other = 'Other';
+
+  static String getEmoji(String relationship) {
+    switch (relationship.toLowerCase()) {
+      case 'mother':
+        return '👩';
+      case 'father':
+        return '👨';
+      case 'sibling':
+        return '👶';
+      case 'grandparent':
+        return '👴';
+      case 'friend':
+        return '👋';
+      case 'caregiver':
+        return '🩺';
+      default:
+        return '👤';
+    }
+  }
+
+  static List<String> get all => [
+    mother,
+    father,
+    sibling,
+    grandparent,
+    friend,
+    caregiver,
+    other,
+  ];
 }

@@ -22,13 +22,24 @@ dependencies:
   flutter_animate: ^4.5.0
   glassmorphism: ^3.0.0
   record: ^6.0.0
+  path_provider: ^2.1.2
+  google_fonts: ^6.1.0
+  
+  
+  # Your TTS feature
   flutter_tts: ^3.8.5
   
+  # Friend's SOS & Location features
+  geolocator: ^13.0.2
+  url_launcher: ^6.2.4
   
-  path_provider: ^2.1.2
+  # Additional features
   flutter_local_notifications: ^17.0.0
   wakelock_plus: ^1.2.0
   torch_light: ^1.0.0
+  flutter_dotenv: ^6.0.0
+  picovoice_flutter: ^3.0.4
+  sqflite: ^2.4.2
 
 dev_dependencies:
   flutter_test:
@@ -40,3 +51,4 @@ flutter:
   assets:
       - assets/models/
       - assets/animations/
+      - .env

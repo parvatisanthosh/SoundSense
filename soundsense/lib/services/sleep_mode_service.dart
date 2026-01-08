@@ -2,24 +2,19 @@ import 'dart:async';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'alert_handler.dart';
-import 'sound_classifier_sleep.dart';
 import '../models/sleep_mode_settings.dart';
-import '../core/services/audio_service.dart';
-import 'dart:typed_data';
 
+/// Simplified Sleep Mode Service - Uses Main YAMNet (No Separate Model!)
+/// 
+/// This version doesn't load a separate model. Instead, it relies on the
+/// main hub's YAMNet which is already working perfectly.
 class SleepModeService {
   bool _isMonitoring = false;
   final AlertHandler _alertHandler = AlertHandler();
-  final SoundClassifierSleep _classifier = SoundClassifierSleep();
-  final AudioService _audioService = AudioService();
   
-  // Audio buffering
-  List<double> _audioBuffer = [];
-  // Buffer size for ~1 second at 16kHz (YAMNet standard)
-  static const int _requiredSamples = 15600;
-
   // Notification setup
-  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin = 
+      FlutterLocalNotificationsPlugin();
 
   static final SleepModeService _instance = SleepModeService._internal();
   factory SleepModeService() => _instance;
@@ -31,10 +26,10 @@ class SleepModeService {
     final InitializationSettings initializationSettings = InitializationSettings(
       android: initializationSettingsAndroid,
     );
-     await flutterLocalNotificationsPlugin.initialize(initializationSettings);
+    await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
-     // Request permissions for Android 13+
-     final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
+    // Request permissions for Android 13+
+    final AndroidFlutterLocalNotificationsPlugin? androidImplementation =
         flutterLocalNotificationsPlugin.resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin>();
             
@@ -49,71 +44,42 @@ class SleepModeService {
     
     // 1. Acquire Wakelock
     await WakelockPlus.enable();
-
-    // 2. Load settings and model
-    SleepModeSettings settings = await SleepModeSettings.load();
-    await _classifier.loadModel();
     
-    // Clear buffer
-    _audioBuffer.clear();
-
-    // 3. Show Foreground Notification
+    // 2. Show Foreground Notification
     await _showForegroundNotification();
-
-    // 4. Start Audio Stream
-    try {
-      _audioService.onAudioData = (List<double> newSamples) {
-        _processAudioData(newSamples, settings);
-      };
-      await _audioService.startListening();
-      print("Sleep Mode: Started listening");
-    } catch (e) {
-      print("Sleep Mode Error: Could not start audio service - $e");
-      stopMonitoring();
-    }
+    
+    print("😴 Sleep Mode: Active (using main YAMNet)");
+    print("   No separate model needed - hub handles detection!");
   }
-
-  void _processAudioData(List<double> newSamples, SleepModeSettings settings) async {
+  
+  /// Called by hub when a critical sound is detected during sleep mode
+  Future<void> triggerCriticalSoundAlert(String soundName) async {
     if (!_isMonitoring) return;
     
-    _audioBuffer.addAll(newSamples);
-
-    if (_audioBuffer.length >= _requiredSamples) {
-      // Extract exactly required samples
-      final processBuffer = _audioBuffer.sublist(0, _requiredSamples);
+    print("😴 Sleep Mode: Critical sound detected - $soundName");
+    
+    // Load settings
+    SleepModeSettings settings = await SleepModeSettings.load();
+    
+    // Check if this sound is in user's critical sounds list
+    if (_isCriticalSound(soundName, settings)) {
+      print("😴 Sleep Mode: TRIGGERING ALERT for $soundName");
       
-      // Keep remainder and overlap slightly (optional, but good for continuous sounds)
-      // For now, just keep remainder
-      _audioBuffer = _audioBuffer.sublist(_requiredSamples);
-
-      // Classify
-      final result = await _classifier.classify(processBuffer);
+      await _alertHandler.triggerAlert(
+        flash: settings.flashEnabled,
+        vibration: settings.vibrationEnabled,
+        smartLights: settings.smartLightsEnabled,
+        smartwatch: settings.smartwatchEnabled,
+      );
       
-      if (result != null) {
-        print("Sleep Mode Detected: $result");
-        // Check if detected sound is in user's enabled critical sounds
-        // Map YAMNet labels to internal keys if necessary, or ensure they match
-        // Assuming labels.txt contains display names, we might need normalization
-        
-        // Simple containment check for now - improve matching logic as needed
-        if (_isCriticalSound(result, settings)) {
-            print("Sleep Mode: TRIGGERING ALERT for $result");
-            _alertHandler.triggerAlert(
-              flash: settings.flashEnabled,
-              vibration: settings.vibrationEnabled,
-              smartLights: settings.smartLightsEnabled,
-              smartwatch: settings.smartwatchEnabled,
-            );
-        }
-      }
+      // Auto-stop alert after 10 seconds
+      Future.delayed(const Duration(seconds: 10), () {
+        _alertHandler.stopAlert();
+      });
     }
   }
 
   bool _isCriticalSound(String detectedLabel, SleepModeSettings settings) {
-    // Basic mapping/checking logic
-    // Detected label comes from model (e.g., 'Baby cry, infant cry')
-    // Settings store keys like 'baby_cry'
-    
     final label = detectedLabel.toLowerCase();
     
     for (final key in settings.criticalSounds) {
@@ -127,15 +93,14 @@ class SleepModeService {
 
   Future<void> stopMonitoring() async {
     _isMonitoring = false;
-    _audioService.stopListening();
     await WakelockPlus.disable();
-    await flutterLocalNotificationsPlugin.cancel(888); // Cancel foreground notification
+    await flutterLocalNotificationsPlugin.cancel(888);
     await _alertHandler.stopAlert();
-    print("Sleep Mode: Stopped monitoring");
+    print("😴 Sleep Mode: Stopped monitoring");
   }
 
   Future<void> _showForegroundNotification() async {
-     const AndroidNotificationDetails androidPlatformChannelSpecifics =
+    const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
             'sleep_mode_channel', 
             'Sleep Mode Background Service',
@@ -150,7 +115,7 @@ class SleepModeService {
         
     await flutterLocalNotificationsPlugin.show(
         888, 
-        'Sleep Mode Active', 
+        'Sleep Guardian Active', 
         'Listening for critical sounds...', 
         platformChannelSpecifics
     );
@@ -166,8 +131,10 @@ class SleepModeService {
     );
     
     // Auto stop alert after 5 seconds for test
-    Future.delayed(Duration(seconds: 5), () {
-        _alertHandler.stopAlert();
+    Future.delayed(const Duration(seconds: 5), () {
+      _alertHandler.stopAlert();
     });
   }
+  
+  bool get isMonitoring => _isMonitoring;
 }

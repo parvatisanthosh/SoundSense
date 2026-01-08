@@ -1,8 +1,6 @@
 // Basic widget test for Dhwani/SoundSense app
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:soundsense/main.dart';
 
 void main() {

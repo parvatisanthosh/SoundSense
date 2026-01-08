@@ -1,15 +1,65 @@
 import 'package:flutter/material.dart';
-import 'features/dashboard/dashboard_screen.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'core/theme/app_theme.dart';
 import 'core/services/settings_service.dart';
+import 'core/services/sleep_scheduler_service.dart';
+import 'core/services/sound_intelligence_hub.dart';
+// Your screens
 import 'screens/sleep_mode_screen.dart';
 import 'screens/splash_screen.dart';
+import 'features/dashboard/dashboard_screen.dart';
 import 'features/training/sound_training_screen.dart';
 import 'features/training/azure_voice_training_screen.dart';
 import 'features/transcription/enhanced_transcription_screen.dart';
+<<<<<<< HEAD
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+=======
+import 'features/settings/settings_screen.dart';
+import 'features/chat/chat_screen.dart';
+// Friend's SOS feature
+import 'features/sos/emergency_contacts_screen.dart';
+import 'features/speaker_recognition/speaker_recognition_screen.dart';
+>>>>>>> vedant-pr
 
 void main() async {
+   
   WidgetsFlutterBinding.ensureInitialized();
+<<<<<<< HEAD
+  await dotenv.load(fileName: ".env");
+=======
+  
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
+  
+  // Set system UI overlay style for dark theme
+  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    statusBarColor: Colors.transparent,
+    statusBarIconBrightness: Brightness.light,
+    systemNavigationBarColor: Color(0xFF0F1419),
+    systemNavigationBarIconBrightness: Brightness.light,
+  ));
+  
+  // Initialize core services
+  print('🚀 Initializing Dhwani...');
+  
+  // 1. Initialize settings
+>>>>>>> vedant-pr
   await SettingsService().init();
+  print('✅ Settings initialized');
+  
+  // 2. Initialize Intelligence Hub (coordinates everything)
+  final hub = SoundIntelligenceHub();
+  await hub.initialize();
+  print('✅ Intelligence Hub initialized');
+  
+  // 3. Initialize Sleep Scheduler (auto sleep mode)
+  final sleepScheduler = SleepSchedulerService.instance;
+  await sleepScheduler.initialize();
+  print('✅ Sleep Scheduler initialized');
+  
+  print('🎉 Dhwani ready!');
+  
   runApp(const SoundSenseApp());
 }
 
@@ -23,8 +73,14 @@ class SoundSenseApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         brightness: Brightness.dark,
-        primaryColor: const Color(0xFF00D9FF),
-        scaffoldBackgroundColor: const Color(0xFF1A1A2E),
+        primaryColor: const Color(0xFF4A9FFF),
+        scaffoldBackgroundColor: const Color(0xFF0F1419),
+        colorScheme: ColorScheme.dark(
+          primary: const Color(0xFF4A9FFF),
+          secondary: const Color(0xFF9C27B0),
+          surface: const Color(0xFF1A2632),
+          background: const Color(0xFF0F1419),
+        ),
       ),
       initialRoute: '/splash',
       routes: {
@@ -34,6 +90,10 @@ class SoundSenseApp extends StatelessWidget {
         '/transcription': (context) => const EnhancedTranscriptionScreen(),
         '/sound-training': (context) => const SoundTrainingScreen(),
         '/voice-training': (context) => const AzureVoiceTrainingScreen(),
+        '/speaker-recognition': (context) => const SpeakerRecognitionScreen(),
+        '/settings': (context) => const SettingsScreen(),
+        '/emergency': (context) => const EmergencyContactsScreen(),
+        '/chat': (context) => const ChatScreen(),
       },
     );
   }

@@ -1,62 +1,64 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:record/record.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/services/azure_speech_service.dart';
-import '../../core/services/azure_speaker_service.dart';
+import '../../core/services/pyannote_api_service.dart'; // ✅ NEW: Pyannote instead of Azure speaker service
 import '../../core/config/env_config.dart';
 
-/// Modern Live Captions Screen with Azure Speaker Identification
+/// Modern Live Captions Screen with Pyannote Speaker Identification
 class EnhancedTranscriptionScreen extends StatefulWidget {
   const EnhancedTranscriptionScreen({super.key});
 
   @override
-  State<EnhancedTranscriptionScreen> createState() => _EnhancedTranscriptionScreenState();
+  State<EnhancedTranscriptionScreen> createState() =>
+      _EnhancedTranscriptionScreenState();
 }
 
 class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScreen> {
-  // Services - EXACTLY THE SAME
+  // Services
   late AzureSpeechService _speechService;
-  final AzureSpeakerService _speakerService = AzureSpeakerService.instance;
+  final PyannoteApiService _speakerService = PyannoteApiService.instance; // ✅ CHANGED: Using Pyannote
   final AudioRecorder _audioRecorder = AudioRecorder();
   
-  // State - EXACTLY THE SAME
+  // State
   bool _isInitialized = false;
   bool _isListening = false;
   bool _isConnected = false;
   String _selectedLanguage = 'en-US';
   
-  // Transcription with speakers - EXACTLY THE SAME
+  // Transcription with speakers
   final List<TranscriptEntry> _transcriptEntries = [];
   String _partialText = '';
-  IdentificationResult? _currentSpeaker;
+  String? _currentSpeakerName; // ✅ CHANGED: Simple string instead of IdentificationResult
+  double _currentConfidence = 0.0; // ✅ NEW: Store confidence
   
-  // Audio buffer for speaker identification - EXACTLY THE SAME
+  // Audio buffer for speaker identification
   List<int> _speakerAudioBuffer = [];
   Timer? _speakerIdentificationTimer;
   
-  // Streams - EXACTLY THE SAME
+  // Streams
   StreamSubscription? _transcriptionSub;
   StreamSubscription? _partialSub;
   StreamSubscription? _connectionSub;
   StreamSubscription? _errorSub;
   StreamSubscription? _audioSub;
-  
+
   final ScrollController _scrollController = ScrollController();
   
   // UI State
   bool _isMuted = false;
-  double _fontSize = 1.0; // 1.0 = normal, 1.5 = large
+  double _fontSize = 1.0;
   
   final List<Map<String, String>> _languages = [
-    {'code': 'en-US', 'name': 'English (US)'},
-    {'code': 'en-IN', 'name': 'English (India)'},
-    {'code': 'hi-IN', 'name': 'Hindi'},
-    {'code': 'ta-IN', 'name': 'Tamil'},
-    {'code': 'te-IN', 'name': 'Telugu'},
-    {'code': 'ml-IN', 'name': 'Malayalam'},
+    {'code': 'en-US', 'name': 'English (US)', 'flag': '🇺🇸'},
+    {'code': 'en-IN', 'name': 'English (India)', 'flag': '🇮🇳'},
+    {'code': 'hi-IN', 'name': 'Hindi', 'flag': '🇮🇳'},
+    {'code': 'es-ES', 'name': 'Spanish', 'flag': '🇪🇸'},
+    {'code': 'fr-FR', 'name': 'French', 'flag': '🇫🇷'},
+    {'code': 'de-DE', 'name': 'German', 'flag': '🇩🇪'},
   ];
 
   @override
@@ -82,7 +84,13 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
     _errorSub = _speechService.errorStream.listen((error) {
       _showSnackbar(error, isError: true);
     });
-    
+
+    // ✅ NEW: Check if Pyannote server is available
+    final healthy = await _speakerService.checkHealth();
+    if (!healthy) {
+      _showSnackbar('Speaker recognition offline', isError: false);
+    }
+
     setState(() => _isInitialized = true);
   }
 
@@ -101,7 +109,7 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
   }
 
   // ============================================================
-  // ALL ORIGINAL LOGIC PRESERVED
+  // TRANSCRIPTION LOGIC (Same as before)
   // ============================================================
 
   void _onTranscription(String fullText) {
@@ -114,18 +122,19 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
         newText = fullText.substring(lastFullText.length).trim();
       }
     }
-    
+
     if (newText.isEmpty) return;
-    
+
     setState(() {
       _transcriptEntries.add(TranscriptEntry(
         text: newText,
-        speaker: _currentSpeaker,
+        speakerName: _currentSpeakerName, // ✅ CHANGED: Using string name
+        confidence: _currentConfidence, // ✅ NEW: Store confidence
         timestamp: DateTime.now(),
       ));
       _partialText = '';
     });
-    
+
     _scrollToBottom();
   }
 
@@ -136,7 +145,7 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
   void _startSpeakerIdentification() {
     _speakerAudioBuffer = [];
     _speakerIdentificationTimer = Timer.periodic(
-      const Duration(seconds: 3),
+      const Duration(seconds: 3), // ✅ Identify every 3 seconds
       (_) => _identifyCurrentSpeaker(),
     );
   }
@@ -146,27 +155,40 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
     _speakerIdentificationTimer = null;
   }
 
+  // ✅ CHANGED: Using Pyannote API
   Future<void> _identifyCurrentSpeaker() async {
-    if (_speakerAudioBuffer.length < 16000 * 2) return;
+    // Need at least 2 seconds of audio (16000 samples/sec * 2 bytes/sample * 2 seconds)
+    if (_speakerAudioBuffer.length < 16000 * 2 * 2) return;
     
     final audioData = Uint8List.fromList(_speakerAudioBuffer);
     _speakerAudioBuffer = [];
     
-    final result = await _speakerService.identifySpeaker(audioData);
-    
-    setState(() {
-      _currentSpeaker = result;
-    });
-    
-    if (result.identified) {
-      print('🎤 Identified: ${result.personName} (${result.confidencePercent}%)');
+    try {
+      // Call Pyannote API
+      final result = await _speakerService.recognizeSpeaker(audioData);
+      
+      if (result != null && mounted) {
+        setState(() {
+          if (result['identified'] == true) {
+            _currentSpeakerName = result['name'];
+            _currentConfidence = (result['confidence'] ?? 0.0).toDouble();
+            print('🔊 Identified: $_currentSpeakerName (${(_currentConfidence * 100).toStringAsFixed(1)}%)');
+          } else {
+            _currentSpeakerName = null;
+            _currentConfidence = (result['confidence'] ?? 0.0).toDouble();
+          }
+        });
+      }
+    } catch (e) {
+      print('❌ Speaker identification error: $e');
     }
   }
 
   void _addAudioForSpeakerIdentification(List<int> audioData) {
     _speakerAudioBuffer.addAll(audioData);
     
-    const maxBufferSize = 16000 * 2 * 3;
+    // Keep last 4 seconds of audio
+    const maxBufferSize = 16000 * 2 * 4;
     if (_speakerAudioBuffer.length > maxBufferSize) {
       _speakerAudioBuffer = _speakerAudioBuffer.sublist(
         _speakerAudioBuffer.length - maxBufferSize,
@@ -179,35 +201,35 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
       _showSnackbar('Microphone permission denied', isError: true);
       return;
     }
-    
+
     final connected = await _speechService.startTranscription(
       language: _selectedLanguage,
     );
-    
+
     if (!connected) {
-      _showSnackbar('Failed to connect', isError: true);
+      _showSnackbar('Failed to connect to Azure', isError: true);
       return;
     }
-    
+
     try {
       final stream = await _audioRecorder.startStream(
-        RecordConfig(
+        const RecordConfig(
           encoder: AudioEncoder.pcm16bits,
           sampleRate: 16000,
           numChannels: 1,
         ),
       );
-      
+
       setState(() => _isListening = true);
+
       _startSpeakerIdentification();
-      
+
       _audioSub = stream.listen((data) {
         if (!_isMuted) {
           _speechService.sendAudioData(Uint8List.fromList(data));
           _addAudioForSpeakerIdentification(data);
         }
       });
-      
     } catch (e) {
       _showSnackbar('Failed to start: $e', isError: true);
       await _speechService.stopTranscription();
@@ -216,7 +238,7 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
 
   Future<void> _stopListening() async {
     setState(() => _isListening = false);
-    
+
     _stopSpeakerIdentification();
     await _audioSub?.cancel();
     await _audioRecorder.stop();
@@ -235,6 +257,8 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
     setState(() {
       _transcriptEntries.clear();
       _partialText = '';
+      _currentSpeakerName = null;
+      _currentConfidence = 0.0;
     });
     _speechService.clearTranscription();
   }
@@ -254,15 +278,15 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
   void _showSnackbar(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.redAccent : Colors.green,
+        content: Text(message, style: const TextStyle(color: Colors.white)),
+        backgroundColor: isError ? const Color(0xFFFF4757) : const Color(0xFF2ED573),
         behavior: SnackBarBehavior.floating,
       ),
     );
   }
 
   // ============================================================
-  // NEW MODERN UI
+  // UI (Same beautiful design)
   // ============================================================
 
   @override
@@ -339,18 +363,85 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
             ),
           ),
           
-          // QR Code Icon
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A2632),
-              borderRadius: BorderRadius.circular(12),
+          // Language selector
+          GestureDetector(
+            onTap: _isListening ? null : _showLanguageSelector,
+            child: Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A2632),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(
+                  _languages.firstWhere((l) => l['code'] == _selectedLanguage)['flag'] ?? '🌐',
+                  style: const TextStyle(fontSize: 24),
+                ),
+              ),
             ),
-            child: const Icon(Icons.qr_code_2, color: Colors.white, size: 24),
           ),
         ],
       ),
+    );
+  }
+
+  void _showLanguageSelector() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1A2632),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Select Language',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ..._languages.map((lang) => ListTile(
+                    onTap: () {
+                      setState(() => _selectedLanguage = lang['code']!);
+                      Navigator.pop(context);
+                    },
+                    leading: Text(lang['flag']!, style: const TextStyle(fontSize: 24)),
+                    title: Text(
+                      lang['name']!,
+                      style: const TextStyle(color: Colors.white, fontSize: 16),
+                    ),
+                    trailing: _selectedLanguage == lang['code']
+                        ? const Icon(Icons.check_circle, color: Color(0xFF4A9FFF))
+                        : null,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  )),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -405,16 +496,57 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 24),
         child: Center(
-          child: displayText.isEmpty
-              ? Text(
-                  _isListening ? 'Start speaking...' : 'Tap microphone to start',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.3),
-                    fontSize: 24 * _fontSize,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // ✅ NEW: Show current speaker name
+              if (_currentSpeakerName != null && _isListening)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4A9FFF).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFF4A9FFF), width: 1),
                   ),
-                )
-              : _buildHighlightedText(displayText),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.person, color: Color(0xFF4A9FFF), size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        _currentSpeakerName!,
+                        style: const TextStyle(
+                          color: Color(0xFF4A9FFF),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '(${(_currentConfidence * 100).toStringAsFixed(0)}%)',
+                        style: TextStyle(
+                          color: const Color(0xFF4A9FFF).withOpacity(0.7),
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              
+              // Caption text
+              displayText.isEmpty
+                  ? Text(
+                      _isListening ? 'Start speaking...' : 'Tap microphone to start',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withOpacity(0.3),
+                        fontSize: 24 * _fontSize,
+                      ),
+                    )
+                  : _buildHighlightedText(displayText),
+            ],
+          ),
         ),
       ),
     );
@@ -520,18 +652,21 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1A2632),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      children: [
-                        const Text('Filter', style: TextStyle(color: Colors.white, fontSize: 14)),
-                        const SizedBox(width: 4),
-                        Icon(Icons.keyboard_arrow_down, color: Colors.white, size: 18),
-                      ],
+                  GestureDetector(
+                    onTap: _clearTranscription,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1A2632),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.delete_outline, color: Colors.white, size: 18),
+                          SizedBox(width: 4),
+                          Text('Clear', style: TextStyle(color: Colors.white, fontSize: 14)),
+                        ],
+                      ),
                     ),
                   ),
                 ],
@@ -546,6 +681,7 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
                       ),
                     )
                   : ListView.builder(
+                      controller: _scrollController,
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       itemCount: _transcriptEntries.length,
                       itemBuilder: (context, index) {
@@ -560,20 +696,14 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
     );
   }
 
+  // ✅ CHANGED: Simplified caption card for Pyannote
   Widget _buildCaptionCard(TranscriptEntry entry) {
-    final isKnown = entry.speaker?.identified ?? false;
-    final name = entry.speaker?.personName ?? 'Unknown Speaker';
+    final speakerName = entry.speakerName ?? 'Unknown';
     final time = '${entry.timestamp.hour}:${entry.timestamp.minute.toString().padLeft(2, '0')} ${entry.timestamp.hour >= 12 ? 'PM' : 'AM'}';
     
-    String emoji = '👤';
-    if (isKnown) {
-      final profile = _speakerService.profiles.firstWhere(
-        (p) => p.personName == name,
-        orElse: () => AzureVoiceProfile(profileId: '', personName: name),
-      );
-      emoji = profile.emoji ?? '👤';
-    }
-    
+    // Get emoji based on name
+    String emoji = _getEmojiForSpeaker(speakerName);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
@@ -590,6 +720,11 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
             decoration: BoxDecoration(
               color: const Color(0xFF4A9FFF).withOpacity(0.2),
               shape: BoxShape.circle,
+              border: Border.all(
+                color: entry.speakerName != null
+                    ? const Color(0xFF4A9FFF).withOpacity(0.3)
+                    : Colors.white.withOpacity(0.1),
+              ),
             ),
             child: Center(child: Text(emoji, style: const TextStyle(fontSize: 24))),
           ),
@@ -602,7 +737,7 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      name,
+                      speakerName,
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 16,
@@ -618,6 +753,17 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
                     ),
                   ],
                 ),
+                if (entry.confidence > 0)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      '${(entry.confidence * 100).toStringAsFixed(0)}% confident',
+                      style: TextStyle(
+                        color: const Color(0xFF4A9FFF).withOpacity(0.7),
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 8),
                 Text(
                   entry.text,
@@ -633,6 +779,18 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
         ],
       ),
     );
+  }
+
+  // ✅ NEW: Get emoji for speaker
+  String _getEmojiForSpeaker(String name) {
+    final lower = name.toLowerCase();
+    if (lower.contains('mom') || lower.contains('mother')) return '👩';
+    if (lower.contains('dad') || lower.contains('father')) return '👨';
+    if (lower.contains('grandma') || lower.contains('grandmother')) return '👵';
+    if (lower.contains('grandpa') || lower.contains('grandfather')) return '👴';
+    if (lower.contains('sister')) return '👧';
+    if (lower.contains('brother')) return '👦';
+    return '👤';
   }
 
   Widget _buildBottomNav() {
@@ -681,15 +839,17 @@ class _EnhancedTranscriptionScreenState extends State<EnhancedTranscriptionScree
   }
 }
 
-/// Transcript entry with speaker info - SAME AS ORIGINAL
+/// ✅ CHANGED: Simplified transcript entry for Pyannote
 class TranscriptEntry {
   final String text;
-  final IdentificationResult? speaker;
+  final String? speakerName; // Simple string name
+  final double confidence; // Confidence score
   final DateTime timestamp;
 
   TranscriptEntry({
     required this.text,
-    this.speaker,
+    this.speakerName,
+    this.confidence = 0.0,
     required this.timestamp,
   });
 }
