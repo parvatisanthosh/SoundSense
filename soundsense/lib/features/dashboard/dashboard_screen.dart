@@ -27,6 +27,7 @@ import '../sos/sos_countdown_screen.dart';
 import '../speaker_recognition/speaker_recognition_screen.dart';
 import '../../shared/widgets/critical_alerts.dart';
 import '../../shared/widgets/sound_grid.dart';
+import '../../shared/widgets/sound_sense_bottom_nav_bar.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -1247,85 +1248,19 @@ IconButton(
   }
 
   Widget _buildBottomNav() {
-    return Container(
-      height: 80,
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(Icons.home, false, null),
-          _buildNavItem(Icons.notifications_none, false, null),
-          // Main listening button
-          GestureDetector(
-            onTap: _toggleListening,
-            onLongPress: () {
-              // Long press for emergency contacts
-              Navigator.pushNamed(context, '/emergency');
-            },
-            child: Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: _isListening 
-                    ? [Colors.red, Colors.red.shade700]
-                    : [const Color(0xFF4A9FFF), const Color(0xFF9C27B0)],
-                ),
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: (_isListening ? Colors.red : const Color(0xFF4A9FFF))
-                        .withOpacity(0.4),
-                    blurRadius: 20,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: Icon(
-                _isListening ? Icons.stop : Icons.mic,
-                color: Theme.of(context).colorScheme.onSurface,
-                size: 32,
-              ),
-            ).animate(onPlay: (c) => _isListening ? c.repeat() : null)
-              .scale(
-                begin: const Offset(1, 1),
-                end: const Offset(1.1, 1.1),
-                duration: 1000.ms,
-              )
-              .then()
-              .scale(
-                begin: const Offset(1.1, 1.1),
-                end: const Offset(1, 1),
-                duration: 1000.ms,
-              ),
-          ),
-          _buildNavItem(Icons.access_time, false, null),
-          _buildNavItem(Icons.settings, false, 
-            () => Navigator.pushNamed(context, '/settings')),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, bool isActive, VoidCallback? onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF4A9FFF) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Icon(
-          icon,
-          color: isActive ? Colors.white : Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-          size: 24,
-        ),
-      ),
+    return SoundSenseBottomNavBar(
+      currentIndex: 0, // Home
+      isListening: _isListening,
+      onMicTap: _toggleListening,
+      onTap: (index) {
+        if (index == 3) { // Settings
+          Navigator.pushNamed(context, '/settings');
+        } else if (index == 2) { // Notifications
+          Navigator.pushNamed(context, '/notifications');
+        } else if (index == 1) { // Chat
+          Navigator.pushNamed(context, '/chat');
+        }
+      },
     );
   }
  Future<void> _triggerManualSOS() async {

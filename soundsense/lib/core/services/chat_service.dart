@@ -5,7 +5,7 @@ class ChatService {
   // Replace with your API key
   static const String _apiKey = 'AIzaSyA9E5q63mvxDPCVCIuaYQL3HRMudz34Knc';
   static const String _baseUrl =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
 
 
   // Store recent sounds for context
@@ -77,12 +77,12 @@ RESPONSE RULES:
       final text = data['candidates'][0]['content']['parts'][0]['text'];
       return text;
     } else {
-      print('API Error: ${response.statusCode} - ${response.body}');
-      return 'Sorry, I could not process your request. Please try again.';
+      print('❌ API Error: ${response.statusCode} - ${response.body}');
+      return 'Sorry, I encountered an error (Code: ${response.statusCode}). Please try again later.';
     }
   } catch (e) {
-    print('Chat error: $e');
-    return 'Sorry, something went wrong. Please check your internet connection.';
+    print('❌ Chat Exception: $e');
+    return 'Sorry, I could not connect to the server. Please check your internet connection.';
   }
 }
 }

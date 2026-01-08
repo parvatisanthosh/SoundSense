@@ -3,6 +3,8 @@ import '../../core/theme/app_theme.dart';
 import '../../core/services/settings_service.dart';
 import '../../core/services/sleep_scheduler_service.dart';
 import '../sos/emergency_contacts_screen.dart';
+import '../../core/services/sound_intelligence_hub.dart' hide TimeOfDay;
+import '../../shared/widgets/sound_sense_bottom_nav_bar.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -974,44 +976,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildBottomNav() {
-    return Container(
-      height: 80,
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-      decoration: const BoxDecoration(
-        color: Color(0xFF0A0E14),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(Icons.home, false, () => Navigator.pushReplacementNamed(context, '/')),
-          _buildNavItem(Icons.notifications_none, false, null),
-          _buildNavItem(Icons.mic, false, null),
-          _buildNavItem(Icons.access_time, false, null),
-          _buildNavItem(Icons.settings, true, null),
-        ],
-      ),
+    return SoundSenseBottomNavBar(
+      currentIndex: 3, // Settings is now index 3
+      isListening: _settings.isListening,
+      onMicTap: () {
+         Navigator.popUntil(context, ModalRoute.withName('/'));
+      },
+      onTap: (index) {
+        if (index == 0) { // Home
+           Navigator.popUntil(context, ModalRoute.withName('/'));
+        } else if (index == 1) { // Chat
+           Navigator.pushNamed(context, '/chat');
+        } else if (index == 2) { // Notifications
+           Navigator.pushNamed(context, '/notifications');
+        }
+      },
     );
   }
-
-  Widget _buildNavItem(IconData icon, bool isActive, VoidCallback? onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF4A9FFF) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Icon(
-          icon,
-          color: isActive ? Colors.white : const Color(0xFF9DABB9),
-          size: 24,
-        ),
-      ),
-    );
-  }
-
   void _showResetDialog() {
     showDialog(
       context: context,
@@ -1045,4 +1026,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
     );
   }
+}
+
+// Extension to get listening state since it wasn't in the original build
+// We need to import the hub.
+extension on SettingsService {
+  bool get isListening => SoundIntelligenceHub().isListening;
 }

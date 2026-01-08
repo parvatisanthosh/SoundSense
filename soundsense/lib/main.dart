@@ -16,6 +16,7 @@ import 'features/settings/settings_screen.dart';
 import 'features/chat/chat_screen.dart';
 // Friend's SOS feature
 import 'features/sos/emergency_contacts_screen.dart';
+import 'features/notifications/notifications_screen.dart';
 import 'features/speaker_recognition/speaker_recognition_screen.dart';
 
 void main() async {
@@ -88,6 +89,7 @@ class SoundSenseApp extends StatelessWidget {
             '/speaker-recognition': (context) => const SpeakerRecognitionScreen(),
             '/settings': (context) => const SettingsScreen(),
             '/emergency': (context) => const EmergencyContactsScreen(),
+            '/notifications': (context) => const NotificationsScreen(),
             '/chat': (context) => const ChatScreen(),
           },
         );

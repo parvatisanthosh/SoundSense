@@ -3,6 +3,9 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/chat_service.dart';
 
+import '../../core/services/sound_intelligence_hub.dart';
+import '../../shared/widgets/sound_sense_bottom_nav_bar.dart';
+
 class ChatScreen extends StatefulWidget {
   final List<String> recentSounds;
 
@@ -75,7 +78,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundPrimary,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -83,6 +86,23 @@ class _ChatScreenState extends State<ChatScreen> {
             if (widget.recentSounds.isNotEmpty) _buildSoundsBanner(),
             Expanded(child: _buildMessagesList()),
             _buildInputArea(),
+            // Add Navbar
+            SoundSenseBottomNavBar(
+              currentIndex: 1, // Chat
+              isListening: SoundIntelligenceHub().isListening,
+              onMicTap: () {
+                Navigator.popUntil(context, ModalRoute.withName('/'));
+              },
+              onTap: (index) {
+                if (index == 0) { // Home
+                  Navigator.popUntil(context, ModalRoute.withName('/'));
+                } else if (index == 2) { // Notifications
+                  Navigator.pushNamed(context, '/notifications');
+                } else if (index == 3) { // Settings
+                  Navigator.pushNamed(context, '/settings');
+                }
+              },
+            ),
           ],
         ),
       ),
@@ -109,7 +129,7 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('AI Assistant', style: AppTheme.headlineLarge),
+                Text('AI Assistant', style: Theme.of(context).textTheme.headlineLarge),
                 Row(
                   children: [
                     Container(
@@ -123,7 +143,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     const SizedBox(width: 6),
                     Text(
                       'Online • Gemini AI',
-                      style: AppTheme.bodySmall.copyWith(color: AppTheme.success),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.success),
                     ),
                   ],
                 ),
@@ -132,9 +152,9 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
           IconButton(
             onPressed: _clearChat,
-            icon: const Icon(Icons.refresh_rounded),
+            icon: Icon(Icons.refresh_rounded, color: Theme.of(context).iconTheme.color),
             style: IconButton.styleFrom(
-              backgroundColor: AppTheme.backgroundSecondary,
+              backgroundColor: Theme.of(context).cardTheme.color,
             ),
           ),
         ],
@@ -207,8 +227,8 @@ class _ChatScreenState extends State<ChatScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
                 color: message.isUser
-                    ? AppTheme.primary
-                    : AppTheme.backgroundSecondary,
+                    ? Theme.of(context).primaryColor
+                    : Theme.of(context).cardTheme.color,
                 borderRadius: BorderRadius.circular(AppTheme.radiusLG).copyWith(
                   bottomLeft: message.isUser
                       ? const Radius.circular(AppTheme.radiusLG)
@@ -219,12 +239,12 @@ class _ChatScreenState extends State<ChatScreen> {
                 ),
                 border: message.isUser
                     ? null
-                    : Border.all(color: AppTheme.borderMedium),
+                    : Border.all(color: Theme.of(context).dividerTheme.color ?? Colors.grey),
               ),
               child: Text(
                 message.text,
-                style: AppTheme.bodyLarge.copyWith(
-                  color: message.isUser ? Colors.white : AppTheme.textPrimary,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: message.isUser ? Colors.white : Theme.of(context).colorScheme.onSurface,
                   height: 1.4,
                 ),
               ),
@@ -236,12 +256,12 @@ class _ChatScreenState extends State<ChatScreen> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: AppTheme.backgroundSecondary,
+                color: Theme.of(context).cardTheme.color,
                 shape: BoxShape.circle,
-                border: Border.all(color: AppTheme.borderMedium),
+                border: Border.all(color: Theme.of(context).dividerTheme.color ?? Colors.grey),
               ),
-              child: const Icon(Icons.person_rounded,
-                  color: AppTheme.textSecondary, size: 18),
+              child: Icon(Icons.person_rounded,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), size: 18),
             ),
           ],
         ],
@@ -269,12 +289,12 @@ class _ChatScreenState extends State<ChatScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: AppTheme.backgroundSecondary,
+              color: Theme.of(context).cardTheme.color,
               borderRadius:
                   BorderRadius.circular(AppTheme.radiusLG).copyWith(
                 bottomLeft: const Radius.circular(4),
               ),
-              border: Border.all(color: AppTheme.borderMedium),
+              border: Border.all(color: Theme.of(context).dividerTheme.color ?? Colors.grey),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -285,7 +305,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: AppTheme.primary,
+                    color: Theme.of(context).primaryColor,
                     shape: BoxShape.circle,
                   ),
                 )
@@ -305,10 +325,10 @@ class _ChatScreenState extends State<ChatScreen> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppTheme.backgroundSecondary,
+        color: Theme.of(context).cardTheme.color,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -320,9 +340,12 @@ class _ChatScreenState extends State<ChatScreen> {
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
-                  color: AppTheme.backgroundTertiary,
+                  color: Theme.of(context).inputDecorationTheme.fillColor,
                   borderRadius: BorderRadius.circular(AppTheme.radiusXL),
-                  border: Border.all(color: AppTheme.borderMedium),
+                  border: Border.all(
+                      color: Theme.of(context).inputDecorationTheme.enabledBorder?.borderSide.color 
+                          ?? Colors.grey.withOpacity(0.3)
+                  ),
                 ),
                 child: Row(
                   children: [
@@ -330,15 +353,16 @@ class _ChatScreenState extends State<ChatScreen> {
                       child: TextField(
                         controller: _messageController,
                         focusNode: _focusNode,
-                        style: AppTheme.bodyLarge,
+                        style: Theme.of(context).textTheme.bodyLarge,
                         maxLines: null,
                         textInputAction: TextInputAction.send,
                         onSubmitted: (_) => _sendMessage(),
                         decoration: InputDecoration(
                           hintText: 'Ask me anything...',
-                          hintStyle: AppTheme.bodyMedium
-                              .copyWith(color: AppTheme.textTertiary),
+                          hintStyle: Theme.of(context).inputDecorationTheme.hintStyle,
                           border: InputBorder.none,
+                          focusedBorder: InputBorder.none,
+                          enabledBorder: InputBorder.none,
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 20,
                             vertical: 14,
@@ -361,7 +385,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: AppTheme.primary.withOpacity(0.3),
+                      color: Theme.of(context).primaryColor.withOpacity(0.3),
                       blurRadius: 12,
                       offset: const Offset(0, 4),
                     ),

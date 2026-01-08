@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/sleep_mode_settings.dart';
 import '../services/sleep_mode_service.dart';
+import '../core/services/sound_intelligence_hub.dart';
+import '../shared/widgets/sound_sense_bottom_nav_bar.dart';
 
 class SleepModeScreen extends StatefulWidget {
   const SleepModeScreen({super.key});
@@ -391,40 +393,27 @@ class _SleepModeScreenState extends State<SleepModeScreen> with SingleTickerProv
   }
 
   Widget _buildBottomNav() {
-    return Container(
-      height: 80,
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildNavItem(Icons.home, true, () => Navigator.pop(context)),
-          _buildNavItem(Icons.credit_card, false, null),
-          _buildNavItem(Icons.music_note, false, null),
-          _buildNavItem(Icons.settings, false, null),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem(IconData icon, bool isActive, VoidCallback? onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF4A9FFF) : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Icon(
-          icon,
-          color: isActive ? Colors.white : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-          size: 28,
-        ),
-      ),
+    return SoundSenseBottomNavBar(
+      currentIndex: -1, // No specific index active for Sleep Mode, or maybe we want Home? No, it's a separate screen.
+      // Actually, wait, Sleep Mode is accessed from Home.
+      // Let's leave currentIndex -1 so nothing is highlighted, or maybe we don't care.
+      // The shared widget highlights based on index.
+      // Let's treat Sleep Mode as a separate mode where nav items navigate away.
+      isListening: SoundIntelligenceHub().isListening,
+      onMicTap: () {
+         Navigator.popUntil(context, ModalRoute.withName('/'));
+      },
+      onTap: (index) {
+        if (index == 0) { // Home
+           Navigator.popUntil(context, ModalRoute.withName('/'));
+        } else if (index == 1) { // Chat
+           Navigator.pushNamed(context, '/chat');
+        } else if (index == 2) { // Notifications
+           Navigator.pushNamed(context, '/notifications');
+        } else if (index == 3) { // Settings
+           Navigator.pushNamed(context, '/settings');
+        }
+      },
     );
   }
 }
