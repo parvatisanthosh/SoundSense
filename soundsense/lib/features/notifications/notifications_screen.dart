@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/services/sound_intelligence_hub.dart';
 import '../../shared/widgets/sound_sense_bottom_nav_bar.dart';
+import 'package:soundsense/l10n/generated/app_localizations.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
@@ -8,11 +9,11 @@ class NotificationsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hub = SoundIntelligenceHub();
-    
-    // ✅ Filter: Only show sounds that need training prompts
+
+    // ✅ Only show sounds that need training prompts
     final trainingPrompts = hub.recentSounds
-        .where((event) => 
-            event.shouldPromptTraining && 
+        .where((event) =>
+            event.shouldPromptTraining &&
             event.source == SoundSource.yamnet)
         .toList();
 
@@ -30,7 +31,7 @@ class NotificationsScreen extends StatelessWidget {
                       itemCount: trainingPrompts.length,
                       itemBuilder: (context, index) {
                         return _buildTrainingPromptCard(
-                          context, 
+                          context,
                           trainingPrompts[index],
                         );
                       },
@@ -57,7 +58,7 @@ class NotificationsScreen extends StatelessWidget {
             ),
             child: IconButton(
               icon: Icon(
-                Icons.arrow_back, 
+                Icons.arrow_back,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
               onPressed: () => Navigator.pop(context),
@@ -69,7 +70,7 @@ class NotificationsScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Training Suggestions',
+                  AppLocalizations.of(context)!.notificationsTitle,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 24,
@@ -77,9 +78,13 @@ class NotificationsScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Improve sound detection',
+                  AppLocalizations.of(context)!.notificationsSubtitle ??
+                      'Improve sound detection',
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.6),
                     fontSize: 14,
                   ),
                 ),
@@ -114,7 +119,10 @@ class NotificationsScreen extends StatelessWidget {
           Text(
             'No training suggestions at the moment',
             style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withOpacity(0.5),
               fontSize: 16,
             ),
           ),
@@ -123,9 +131,10 @@ class NotificationsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTrainingPromptCard(BuildContext context, SmartSoundEvent event) {
+  Widget _buildTrainingPromptCard(
+      BuildContext context, SmartSoundEvent event) {
     final hub = SoundIntelligenceHub();
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(20),
@@ -140,7 +149,7 @@ class NotificationsScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with sound info
+          /// Header
           Row(
             children: [
               Container(
@@ -149,9 +158,9 @@ class NotificationsScreen extends StatelessWidget {
                   color: const Color(0xFF4A9FFF).withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(
+                child: const Icon(
                   Icons.lightbulb_outline,
-                  color: const Color(0xFF4A9FFF),
+                  color: Color(0xFF4A9FFF),
                   size: 28,
                 ),
               ),
@@ -169,9 +178,12 @@ class NotificationsScreen extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '${(event.confidence * 100).toInt()}% confidence',
+                      _formatTime(context, event.timestamp),
                       style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.6),
                         fontSize: 14,
                       ),
                     ),
@@ -180,10 +192,10 @@ class NotificationsScreen extends StatelessWidget {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 16),
-          
-          // Training prompt message
+
+          /// Prompt message
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -195,9 +207,9 @@ class NotificationsScreen extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.info_outline,
-                      color: const Color(0xFF4A9FFF),
+                      color: Color(0xFF4A9FFF),
                       size: 20,
                     ),
                     const SizedBox(width: 8),
@@ -217,86 +229,64 @@ class NotificationsScreen extends StatelessWidget {
                 Text(
                   'Training helps improve detection accuracy for sounds you care about.',
                   style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withOpacity(0.7),
                     fontSize: 14,
                   ),
                 ),
               ],
             ),
           ),
-          
+
           const SizedBox(height: 16),
-          
-          // Additional info if available
+
+          /// Transcription
           if (event.transcription != null) ...[
-            Row(
-              children: [
-                Icon(
-                  Icons.transcribe,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    '"${event.transcription}"',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                      fontSize: 14,
-                      fontStyle: FontStyle.italic,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
+            Text(
+              '"${event.transcription}"',
+              style: TextStyle(
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withOpacity(0.7),
+                fontSize: 14,
+                fontStyle: FontStyle.italic,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 12),
           ],
-          
+
+          /// Speaker
           if (event.speakerName != null) ...[
-            Row(
-              children: [
-                Icon(
-                  Icons.person,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  'Speaker: ${event.speakerName} (${(event.speakerConfidence * 100).toInt()}%)',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
-                    fontSize: 14,
-                  ),
-                ),
-              ],
+            Text(
+              '${AppLocalizations.of(context)!.notificationsSpeaker} '
+              '${event.speakerName} '
+              '${(event.speakerConfidence * 100).toInt()}%',
+              style: TextStyle(
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withOpacity(0.6),
+                fontSize: 12,
+              ),
             ),
             const SizedBox(height: 12),
           ],
-          
-          // Time
-          Text(
-            'Detected ${_formatTime(event.timestamp)}',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
-              fontSize: 12,
-            ),
-          ),
-          
-          const SizedBox(height: 20),
-          
-          // Action buttons
+
+          /// Actions
           Row(
             children: [
               Expanded(
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    // Accept training
                     hub.acceptTrainingPrompt(event.soundName);
                     Navigator.pushNamed(context, '/sound-training');
                   },
-                  icon: const Icon(Icons.mic, size: 20),
+                  icon: const Icon(Icons.mic),
                   label: const Text('Yes, Train'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF4A9FFF),
@@ -312,35 +302,10 @@ class NotificationsScreen extends StatelessWidget {
               Expanded(
                 child: OutlinedButton(
                   onPressed: () {
-                    // Reject training
                     hub.rejectTrainingPrompt(event.soundName);
-                    
-                    // Refresh the screen
-                    Navigator.pushReplacementNamed(context, '/notifications');
-                    
-                    // Show feedback
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          hub.shouldShowTrainingPrompt(event.soundName)
-                            ? 'Maybe later'
-                            : 'Won\'t ask again for "${event.soundName}"',
-                        ),
-                        behavior: SnackBarBehavior.floating,
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
+                    Navigator.pushReplacementNamed(
+                        context, '/notifications');
                   },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Theme.of(context).colorScheme.onSurface,
-                    side: BorderSide(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
-                    ),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
                   child: const Text('No Thanks'),
                 ),
               ),
@@ -351,11 +316,12 @@ class NotificationsScreen extends StatelessWidget {
     );
   }
 
-  String _formatTime(DateTime timestamp) {
-    final now = DateTime.now();
-    final diff = now.difference(timestamp);
-    
-    if (diff.inMinutes < 1) return 'just now';
+  String _formatTime(BuildContext context, DateTime timestamp) {
+    final diff = DateTime.now().difference(timestamp);
+
+    if (diff.inMinutes < 1) {
+      return AppLocalizations.of(context)!.notificationTimeJustNow;
+    }
     if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     return '${timestamp.day}/${timestamp.month}';
@@ -363,17 +329,17 @@ class NotificationsScreen extends StatelessWidget {
 
   Widget _buildBottomNav(BuildContext context) {
     return SoundSenseBottomNavBar(
-      currentIndex: 2, // Notifications
+      currentIndex: 2,
       isListening: SoundIntelligenceHub().isListening,
       onMicTap: () {
         Navigator.popUntil(context, ModalRoute.withName('/'));
       },
       onTap: (index) {
-        if (index == 0) { // Home
+        if (index == 0) {
           Navigator.popUntil(context, ModalRoute.withName('/'));
-        } else if (index == 1) { // Chat
+        } else if (index == 1) {
           Navigator.pushNamed(context, '/chat');
-        } else if (index == 3) { // Settings
+        } else if (index == 3) {
           Navigator.pushNamed(context, '/settings');
         }
       },

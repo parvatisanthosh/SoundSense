@@ -78,6 +78,37 @@ class AppTheme {
     end: Alignment.bottomRight,
   );
   
+  // NEW UI COLORS
+  // accentGreen already defined above
+  static const Color accentRed = Color(0xFFFF5252);   // SOS button
+  static const Color softLavender = Color(0xFFE8EAF6); // Gradient start
+  static const Color white = Colors.white;             // Gradient end
+  
+  // Avatar Colors
+  static const List<Color> avatarColors = [
+    Color(0xFF4A9FFF), // Blue
+    Color(0xFF9C27B0), // Purple
+    Color(0xFFE91E63), // Pink
+    Color(0xFFFF9800), // Orange
+    Color(0xFF009688), // Teal
+  ];
+
+  static const LinearGradient softPurpleGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: [
+      Color(0xFFF3E5F5), // Very light purple
+      Colors.white,
+    ],
+    stops: [0.0, 0.4],
+  );
+
+  static const LinearGradient listeningGradient = LinearGradient(
+    colors: [Color(0xFFFF9800), Color(0xFFFF5722)], // Orange gradient for app icon
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+  
   static const LinearGradient accentGradient = LinearGradient(
     colors: [accent, Color(0xFF7B2CBF)],
     begin: Alignment.topLeft,

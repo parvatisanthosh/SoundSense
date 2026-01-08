@@ -3,6 +3,7 @@ import 'package:record/record.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
+import 'package:soundsense/l10n/generated/app_localizations.dart';
 import '../../core/services/pyannote_api_service.dart';
 import 'speaker_enrollment_screen.dart';
 
@@ -41,7 +42,7 @@ class _SpeakerRecognitionScreenState extends State<SpeakerRecognitionScreen> {
   Future<void> _startRecognition() async {
     if (!_isServerHealthy) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Server not available')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.spkServerUnavailable)),
       );
       return;
     }
@@ -75,7 +76,7 @@ class _SpeakerRecognitionScreenState extends State<SpeakerRecognitionScreen> {
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Microphone permission denied')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.spkMicDenied)),
       );
     }
   }
@@ -98,11 +99,11 @@ class _SpeakerRecognitionScreenState extends State<SpeakerRecognitionScreen> {
       if (result != null) {
         setState(() {
           if (result['identified'] == true) {
-            _currentSpeaker = result['name'] ?? 'Unknown';
+            _currentSpeaker = result['name'] ?? AppLocalizations.of(context)!.spkUnknown;
             _confidence = (result['confidence'] ?? 0.0).toDouble();
             print('✅ Identified: $_currentSpeaker (${(_confidence * 100).toStringAsFixed(1)}%)');
           } else {
-            _currentSpeaker = 'Unknown speaker';
+            _currentSpeaker = AppLocalizations.of(context)!.spkUnknownSpeaker;
             _confidence = (result['confidence'] ?? 0.0).toDouble();
             print('❌ Not identified. Best score: ${(_confidence * 100).toStringAsFixed(1)}% (threshold: 70%)');
           }
@@ -114,14 +115,14 @@ class _SpeakerRecognitionScreenState extends State<SpeakerRecognitionScreen> {
             content: Text(
               result['identified'] == true 
                 ? '✓ ${result['name']} (${(_confidence * 100).toStringAsFixed(1)}%)'
-                : '✗ Unknown (${(_confidence * 100).toStringAsFixed(1)}% < 70%)',
+                : '✗ ${AppLocalizations.of(context)!.spkUnknown} (${(_confidence * 100).toStringAsFixed(1)}% < 70%)',
             ),
             backgroundColor: result['identified'] == true ? Colors.green : Colors.orange,
           ),
         );
       } else {
         setState(() {
-          _currentSpeaker = 'Recognition failed';
+          _currentSpeaker = AppLocalizations.of(context)!.spkFailed;
           _confidence = 0.0;
         });
       }
@@ -140,7 +141,7 @@ class _SpeakerRecognitionScreenState extends State<SpeakerRecognitionScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Theme.of(context).cardTheme.color,
-        title: Text('Speaker Recognition', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+        title: Text(AppLocalizations.of(context)!.spkTitle, style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
         actions: [
           IconButton(
             icon: Icon(Icons.refresh, color: Theme.of(context).colorScheme.onSurface),
@@ -164,7 +165,7 @@ class _SpeakerRecognitionScreenState extends State<SpeakerRecognitionScreen> {
           const Icon(Icons.cloud_off, size: 64, color: Colors.red),
           const SizedBox(height: 16),
           Text(
-            'Cannot connect to server',
+            AppLocalizations.of(context)!.spkConnectError,
             style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18),
           ),
           const SizedBox(height: 16),
@@ -173,7 +174,7 @@ class _SpeakerRecognitionScreenState extends State<SpeakerRecognitionScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF4A9FFF),
             ),
-            child: const Text('Retry'),
+            child: Text(AppLocalizations.of(context)!.spkRetry),
           ),
         ],
       ),
@@ -234,7 +235,7 @@ class _SpeakerRecognitionScreenState extends State<SpeakerRecognitionScreen> {
             onPressed: _isRecording ? null : _startRecognition,
             icon: Icon(_isRecording ? Icons.stop : Icons.mic, color: Colors.white),
             label: Text(
-              _isRecording ? 'Recording (4s)...' : 'Identify Speaker',
+              _isRecording ? AppLocalizations.of(context)!.spkRecording : AppLocalizations.of(context)!.spkIdentify,
               style: const TextStyle(color: Colors.white),
             ),
             style: ElevatedButton.styleFrom(
@@ -258,9 +259,9 @@ class _SpeakerRecognitionScreenState extends State<SpeakerRecognitionScreen> {
               );
             },
             icon: const Icon(Icons.person_add, color: Color(0xFF4A9FFF)),
-            label: const Text(
-              'Add Family Member',
-              style: TextStyle(color: Color(0xFF4A9FFF)),
+            label: Text(
+              AppLocalizations.of(context)!.spkAddMember,
+              style: const TextStyle(color: Color(0xFF4A9FFF)),
             ),
           ),
           
@@ -281,7 +282,7 @@ class _SpeakerRecognitionScreenState extends State<SpeakerRecognitionScreen> {
                     Icon(Icons.info_outline, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), size: 20),
                     const SizedBox(width: 8),
                     Text(
-                      'How to use:',
+                      AppLocalizations.of(context)!.spkHowTo,
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                         fontSize: 14,
@@ -292,9 +293,9 @@ class _SpeakerRecognitionScreenState extends State<SpeakerRecognitionScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '1. First, add family members using "Add Family Member"\n'
-                  '2. Then tap "Identify Speaker" to recognize who\'s talking\n'
-                  '3. The app will record for 3 seconds',
+                  '${AppLocalizations.of(context)!.spkInstruction1}\n'
+                  '${AppLocalizations.of(context)!.spkInstruction2}\n'
+                  '${AppLocalizations.of(context)!.spkInstruction3}',
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                     fontSize: 13,

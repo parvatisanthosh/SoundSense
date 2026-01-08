@@ -6,6 +6,7 @@ import 'package:record/record.dart';
 import '../../core/models/custom_sound_model.dart';
 import '../../core/services/custom_sound_service.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:soundsense/l10n/generated/app_localizations.dart';
 
 class SoundTrainingScreen extends StatefulWidget {
   const SoundTrainingScreen({super.key});
@@ -87,11 +88,11 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Teach Dhwani',
+                  AppLocalizations.of(context)!.trainTitle,
                   style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 40, fontWeight: FontWeight.bold, height: 1.2),
                 ),
                 Text(
-                  'a new sound',
+                  AppLocalizations.of(context)!.trainNewSound,
                   style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 40, fontWeight: FontWeight.bold, height: 1.2),
                 ),
                 const SizedBox(height: 32),
@@ -126,7 +127,7 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
               child: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface, size: 24),
             ),
           ),
-          Text('New Sound', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 24, fontWeight: FontWeight.bold)),
+          Text(AppLocalizations.of(context)!.trainNewSound, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 24, fontWeight: FontWeight.bold)),
           Container(
             width: 56,
             height: 56,
@@ -148,7 +149,7 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('SOUND IDENTITY', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 1.5)),
+          Text(AppLocalizations.of(context)!.trainIdentity, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5), fontSize: 12, fontWeight: FontWeight.w600, letterSpacing: 1.5)),
           const SizedBox(height: 16),
           Row(
             children: [
@@ -164,7 +165,7 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
                   controller: _nameController,
                   style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18),
                   decoration: InputDecoration(
-                    hintText: 'e.g. Microwave Beep',
+                    hintText: AppLocalizations.of(context)!.trainNameHint,
                     hintStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4), fontSize: 18),
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.zero,
@@ -183,7 +184,7 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Category', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16, fontWeight: FontWeight.w600)),
+        Text(AppLocalizations.of(context)!.trainCategory, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16, fontWeight: FontWeight.w600)),
         const SizedBox(height: 12),
         Wrap(
           spacing: 8,
@@ -224,7 +225,7 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('Your Custom Sounds', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16, fontWeight: FontWeight.w600)),
+            Text(AppLocalizations.of(context)!.trainCustomSounds, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 16, fontWeight: FontWeight.w600)),
             Text('${sounds.length} sounds', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5))),
           ],
         ),
@@ -274,7 +275,7 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
-        child: const Text('Start Training', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+        child: Text(AppLocalizations.of(context)!.trainStart, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ),
     );
   }
@@ -293,8 +294,8 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Teach Dhwani', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 40, fontWeight: FontWeight.bold, height: 1.2)),
-                Text('a new sound', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 40, fontWeight: FontWeight.bold, height: 1.2)),
+                Text(AppLocalizations.of(context)!.trainTitle, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 40, fontWeight: FontWeight.bold, height: 1.2)),
+                Text(AppLocalizations.of(context)!.trainNewSound, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 40, fontWeight: FontWeight.bold, height: 1.2)),
                 const SizedBox(height: 32),
                 _buildSoundIdentityCard(),
                 const SizedBox(height: 32),
@@ -305,7 +306,7 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
                 Center(
                   child: TextButton(
                     onPressed: _cancelTraining,
-                    child: const Text('Cancel Training', style: TextStyle(color: Colors.redAccent)),
+                    child: Text(AppLocalizations.of(context)!.trainCancel, style: const TextStyle(color: Colors.redAccent)),
                   ),
                 ),
                 const SizedBox(height: 100),
@@ -323,7 +324,7 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(color: const Color(0xFF4A9FFF), borderRadius: BorderRadius.circular(20)),
-          child: Text('Step $_currentStep of $_totalSteps', style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
+          child: Text('${AppLocalizations.of(context)!.trainStep} $_currentStep of $_totalSteps', style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.w600)),
         ),
       ],
     );
@@ -339,9 +340,9 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Record Sample', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 24, fontWeight: FontWeight.bold)),
+                Text(AppLocalizations.of(context)!.trainRecordTitle, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 24, fontWeight: FontWeight.bold)),
                 SizedBox(height: 4),
-                Text('Capture clear audio of the sound.', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), fontSize: 14)),
+                Text(AppLocalizations.of(context)!.trainRecordSubtitle, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7), fontSize: 14)),
               ],
             ),
             Container(
@@ -356,7 +357,7 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
         Container(
           height: 200,
           decoration: BoxDecoration(color: Theme.of(context).cardTheme.color, borderRadius: BorderRadius.circular(20)),
-          child: Center(child: _isRecording ? _buildWaveformAnimation() : Text('Ready to record', style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3), fontSize: 16))),
+          child: Center(child: _isRecording ? _buildWaveformAnimation() : Text(AppLocalizations.of(context)!.trainReady, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3), fontSize: 16))),
         ),
         const SizedBox(height: 24),
         Row(
@@ -375,7 +376,7 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
                     children: [
                       Icon(_isRecording ? Icons.stop_circle : Icons.fiber_manual_record, color: Colors.white, size: 24),
                       const SizedBox(width: 12),
-                      Text(_isRecording ? 'Recording...' : 'Record', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
+                      Text(_isRecording ? AppLocalizations.of(context)!.trainRecording : AppLocalizations.of(context)!.trainRecord, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ),
@@ -391,7 +392,7 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
                   children: [
                     Icon(Icons.upload_file, color: Theme.of(context).colorScheme.onSurface, size: 24),
                     SizedBox(width: 12),
-                    Text('Upload', style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w600)),
+                    Text(AppLocalizations.of(context)!.trainUpload, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18, fontWeight: FontWeight.w600)),
                   ],
                 ),
               ),
@@ -415,7 +416,7 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
           }),
         ),
         const SizedBox(height: 16),
-        Text('LISTENING', style: TextStyle(color: const Color(0xFF4A9FFF).withOpacity(0.8), fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 2))
+        Text(AppLocalizations.of(context)!.trainListening, style: TextStyle(color: const Color(0xFF4A9FFF).withOpacity(0.8), fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 2))
             .animate(onPlay: (c) => c.repeat()).fadeIn(duration: 500.ms).then().fadeOut(duration: 500.ms),
       ],
     );
@@ -536,7 +537,7 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
         _showSnackbar('Sample ${_currentSession!.samplesCollected} recorded! ✓');
         
         if (_currentSession!.isComplete) {
-          _showSnackbar('Training complete! 🎉');
+          _showSnackbar(AppLocalizations.of(context)!.trainComplete);
           setState(() {
             _currentSession = null;
             _nameController.clear();
@@ -567,19 +568,19 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: Theme.of(context).cardTheme.color,
-        title: Text('Delete Sound?', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+        title: Text(AppLocalizations.of(context)!.trainDelete, style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
         content: Text(
-          'Delete "${sound.name}"? This cannot be undone.',
+          '${AppLocalizations.of(context)!.trainDeleteConfirm} "${sound.name}"?',
           style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7)),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.trainCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.redAccent)),
+            child: Text(AppLocalizations.of(context)!.trainDeleteAction, style: const TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:ui';
 import 'tts_alert_service.dart';
 
 class SettingsService {
@@ -31,6 +32,11 @@ class SettingsService {
   bool isDarkMode = true;
   final ValueNotifier<bool> darkModeNotifier = ValueNotifier<bool>(true);
 
+  // Localization setting
+  Locale _locale = const Locale('en');
+  Locale get locale => _locale;
+  final ValueNotifier<Locale> localeNotifier = ValueNotifier<Locale>(const Locale('en'));
+
   bool _ttsEnabled = true;
 
 bool get ttsEnabled => _ttsEnabled;
@@ -52,27 +58,39 @@ Future<void> setTTSEnabled(bool value) async {
 
   // Load all settings
   // Load all settings
-Future<void> _loadSettings() async {
-  criticalAlerts = _prefs?.getBool(_criticalAlertsKey) ?? true;
-  importantAlerts = _prefs?.getBool(_importantAlertsKey) ?? true;
-  normalAlerts = _prefs?.getBool(_normalAlertsKey) ?? false;
-  vibrationEnabled = _prefs?.getBool(_vibrationEnabledKey) ?? true;
-  vibrationIntensity = _prefs?.getString(_vibrationIntensityKey) ?? 'Medium';
-  sensitivity = _prefs?.getDouble(_sensitivityKey) ?? 0.5;
-  
-  // Load Dark Mode
-  isDarkMode = _prefs?.getBool(_darkModeKey) ?? true;
-  darkModeNotifier.value = isDarkMode;
-  
-  // Load TTS setting
-  _ttsEnabled = _prefs?.getBool('tts_enabled') ?? true;
-  TTSAlertService.instance.setEnabled(_ttsEnabled);
-}
+  // Load all settings
+  Future<void> _loadSettings() async {
+    criticalAlerts = _prefs?.getBool(_criticalAlertsKey) ?? true;
+    importantAlerts = _prefs?.getBool(_importantAlertsKey) ?? true;
+    normalAlerts = _prefs?.getBool(_normalAlertsKey) ?? false;
+    vibrationEnabled = _prefs?.getBool(_vibrationEnabledKey) ?? true;
+    vibrationIntensity = _prefs?.getString(_vibrationIntensityKey) ?? 'Medium';
+    sensitivity = _prefs?.getDouble(_sensitivityKey) ?? 0.5;
+    
+    // Load Dark Mode
+    isDarkMode = _prefs?.getBool(_darkModeKey) ?? true;
+    darkModeNotifier.value = isDarkMode;
+
+    // Load Language
+    final langCode = _prefs?.getString('language_code') ?? 'en';
+    _locale = Locale(langCode);
+    localeNotifier.value = _locale;
+    
+    // Load TTS setting
+    _ttsEnabled = _prefs?.getBool('tts_enabled') ?? true;
+    TTSAlertService.instance.setEnabled(_ttsEnabled);
+  }
 
   // Save individual settings
   Future<void> setCriticalAlerts(bool value) async {
     criticalAlerts = value;
     await _prefs?.setBool(_criticalAlertsKey, value);
+  }
+
+  Future<void> setLocale(String languageCode) async {
+    _locale = Locale(languageCode);
+    localeNotifier.value = _locale;
+    await _prefs?.setString('language_code', languageCode);
   }
 
   Future<void> setImportantAlerts(bool value) async {

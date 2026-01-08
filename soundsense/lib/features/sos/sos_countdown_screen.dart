@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/theme/app_theme.dart';
+import 'package:soundsense/l10n/generated/app_localizations.dart';
 import '../../core/services/sos_service.dart';
 
 /// Full-screen SOS countdown with cancel option
@@ -135,8 +136,9 @@ class _SOSCountdownScreenState extends State<SOSCountdownScreen>
               const SizedBox(height: 40),
 
               // Title
+              // Title
               Text(
-                'EMERGENCY SOS',
+                AppLocalizations.of(context)!.sosTitle.toUpperCase(),
                 style: AppTheme.displaySmall.copyWith(
                   color: AppTheme.error,
                   fontWeight: FontWeight.bold,
@@ -166,7 +168,7 @@ class _SOSCountdownScreenState extends State<SOSCountdownScreen>
               ),
 
               Text(
-                'seconds until SOS is sent',
+                AppLocalizations.of(context)!.sosCountSeconds,
                 style: AppTheme.bodyMedium.copyWith(color: AppTheme.textSecondary),
               ),
 
@@ -190,7 +192,7 @@ class _SOSCountdownScreenState extends State<SOSCountdownScreen>
                               color: AppTheme.error, size: 18),
                           const SizedBox(width: 8),
                           Text(
-                            'Detected Sounds',
+                            AppLocalizations.of(context)!.sosDetectedSounds,
                             style: AppTheme.labelLarge
                                 .copyWith(color: AppTheme.error),
                           ),
@@ -225,13 +227,13 @@ class _SOSCountdownScreenState extends State<SOSCountdownScreen>
                           color: Colors.white, size: 32),
                       const SizedBox(height: 8),
                       Text(
-                        'TAP TO CANCEL',
+                        AppLocalizations.of(context)!.sosTapCancel,
                         style: AppTheme.labelLarge.copyWith(
                           letterSpacing: 1,
                         ),
                       ),
                       Text(
-                        "I'm okay, cancel the alert",
+                        AppLocalizations.of(context)!.sosCancelQuote,
                         style: AppTheme.bodySmall,
                       ),
                     ],
@@ -286,7 +288,7 @@ class SOSSentScreen extends StatelessWidget {
               const SizedBox(height: 32),
 
               Text(
-                'SOS SENT',
+                AppLocalizations.of(context)!.sosSentTitle,
                 style: AppTheme.displaySmall.copyWith(
                   color: AppTheme.success,
                   fontWeight: FontWeight.bold,
@@ -296,14 +298,14 @@ class SOSSentScreen extends StatelessWidget {
               const SizedBox(height: 16),
 
               Text(
-                '$contactsNotified contact${contactsNotified != 1 ? 's' : ''} notified',
+                '$contactsNotified ${AppLocalizations.of(context)!.sosNotified}',
                 style: AppTheme.headlineSmall,
               ).animate().fadeIn(delay: 500.ms),
 
               const SizedBox(height: 12),
 
               Text(
-                'Your emergency contacts have been sent your location. Help is on the way.',
+                AppLocalizations.of(context)!.sosSentMessage,
                 textAlign: TextAlign.center,
                 style: AppTheme.bodyMedium,
               ).animate().fadeIn(delay: 700.ms),
@@ -318,7 +320,7 @@ class SOSSentScreen extends StatelessWidget {
                     backgroundColor: AppTheme.success,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  child: const Text('I AM SAFE'),
+                  child: Text(AppLocalizations.of(context)!.sosSafe),
                 ),
               ).animate().fadeIn(delay: 900.ms),
 
@@ -330,7 +332,7 @@ class SOSSentScreen extends StatelessWidget {
                 },
                 icon: const Icon(Icons.phone_rounded, color: AppTheme.error),
                 label: Text(
-                  'Call Emergency Services (112)',
+                  AppLocalizations.of(context)!.sosCallEmergency,
                   style: AppTheme.labelLarge.copyWith(color: AppTheme.error),
                 ),
               ).animate().fadeIn(delay: 1100.ms),

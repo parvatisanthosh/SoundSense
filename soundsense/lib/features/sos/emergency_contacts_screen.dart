@@ -4,6 +4,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/services/sos_service.dart';
 import '../../core/services/location_service.dart';
 import '../../core/services/sms_service.dart';
+import 'package:soundsense/l10n/generated/app_localizations.dart';
 import 'sos_countdown_screen.dart';
 
 /// Emergency Contacts Management Screen
@@ -51,7 +52,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text('Emergency SOS', style: AppTheme.headlineMedium),
+        title: Text(AppLocalizations.of(context)!.sosTitle, style: AppTheme.headlineMedium),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -77,7 +78,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
         onPressed: _showAddContactDialog,
         backgroundColor: AppTheme.primary,
         icon: const Icon(Icons.person_add_rounded),
-        label: const Text('Add Contact'),
+        label: Text(AppLocalizations.of(context)!.sosAddButton),
       ),
     );
   }
@@ -101,12 +102,12 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
           const Icon(Icons.emergency_rounded, color: Colors.white, size: 48),
           const SizedBox(height: 16),
           Text(
-            'Emergency SOS',
+            AppLocalizations.of(context)!.sosTitle,
             style: AppTheme.headlineLarge.copyWith(color: Colors.white),
           ),
           const SizedBox(height: 8),
           Text(
-            'Press the button below to send an emergency alert to all your contacts with your location.',
+            AppLocalizations.of(context)!.sosDescription,
             textAlign: TextAlign.center,
             style: AppTheme.bodyMedium.copyWith(color: Colors.white70),
           ),
@@ -125,7 +126,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                     ),
                   ),
                   icon: const Icon(Icons.sos_rounded),
-                  label: Text('SEND SOS NOW',
+                  label: Text(AppLocalizations.of(context)!.sosSendButton,
                       style: AppTheme.buttonText
                           .copyWith(color: AppTheme.error)),
                 ),
@@ -155,7 +156,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text('Emergency Contacts', style: AppTheme.headlineSmall),
+        Text(AppLocalizations.of(context)!.sosContactsHeader, style: AppTheme.headlineSmall),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
@@ -193,10 +194,10 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                 color: AppTheme.warning, size: 48),
           ),
           const SizedBox(height: 20),
-          Text('No Contacts Added', style: AppTheme.headlineSmall),
+          Text(AppLocalizations.of(context)!.sosNoContacts, style: AppTheme.headlineSmall),
           const SizedBox(height: 8),
           Text(
-            'Add emergency contacts to enable SOS alerts. They will receive your location when you trigger an emergency.',
+            AppLocalizations.of(context)!.sosAddContactPrompt,
             textAlign: TextAlign.center,
             style: AppTheme.bodyMedium,
           ),
@@ -286,15 +287,15 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
               const Icon(Icons.info_outline_rounded,
                   color: AppTheme.info, size: 20),
               const SizedBox(width: 10),
-              Text('How SOS Works',
+              Text(AppLocalizations.of(context)!.sosHowItWorks,
                   style: AppTheme.labelLarge.copyWith(color: AppTheme.info)),
             ],
           ),
           const SizedBox(height: 12),
-          _buildInfoItem('🔊', 'Automatic trigger on critical sounds (siren, alarm)'),
-          _buildInfoItem('📍', 'Sends your GPS location'),
-          _buildInfoItem('📱', 'SMS sent to all emergency contacts'),
-          _buildInfoItem('⏱️', '10 second countdown to cancel'),
+          _buildInfoItem('🔊', AppLocalizations.of(context)!.sosStepSound),
+          _buildInfoItem('📍', AppLocalizations.of(context)!.sosStepLocation),
+          _buildInfoItem('📱', AppLocalizations.of(context)!.sosStepSms),
+          _buildInfoItem('⏱️', AppLocalizations.of(context)!.sosStepCountdown),
         ],
       ),
     );
@@ -451,14 +452,15 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              Text('Add Emergency Contact', style: AppTheme.headlineMedium),
+              const SizedBox(height: 20),
+              Text(AppLocalizations.of(context)!.sosAddContactTitle, style: AppTheme.headlineMedium),
               const SizedBox(height: 20),
               TextField(
                 controller: nameController,
                 style: AppTheme.bodyLarge,
-                decoration: const InputDecoration(
-                  labelText: 'Name',
-                  prefixIcon: Icon(Icons.person_rounded),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.sosNameLabel,
+                  prefixIcon: const Icon(Icons.person_rounded),
                 ),
               ),
               const SizedBox(height: 16),
@@ -466,13 +468,13 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                 controller: phoneController,
                 keyboardType: TextInputType.phone,
                 style: AppTheme.bodyLarge,
-                decoration: const InputDecoration(
-                  labelText: 'Phone Number',
-                  prefixIcon: Icon(Icons.phone_rounded),
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.sosPhoneLabel,
+                  prefixIcon: const Icon(Icons.phone_rounded),
                 ),
               ),
               const SizedBox(height: 16),
-              Text('Relationship', style: AppTheme.labelLarge),
+              Text(AppLocalizations.of(context)!.sosRelationshipLabel, style: AppTheme.labelLarge),
               const SizedBox(height: 10),
               Wrap(
                 spacing: 8,
@@ -548,7 +550,7 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                   ),
-                  child: const Text('Add Contact'),
+                  child: Text(AppLocalizations.of(context)!.sosAddContactAction),
                 ),
               ),
             ],
@@ -563,17 +565,17 @@ class _EmergencyContactsScreenState extends State<EmergencyContactsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: AppTheme.backgroundSecondary,
-        title: Text('Remove Contact?', style: AppTheme.headlineSmall),
-        content: Text('Remove ${contact.name} from emergency contacts?',
+        title: Text(AppLocalizations.of(context)!.sosRemoveContactTitle, style: AppTheme.headlineSmall),
+        content: Text(AppLocalizations.of(context)!.sosRemoveContactConfirm(contact.name),
             style: AppTheme.bodyMedium),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.trainCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Remove',
+            child: Text(AppLocalizations.of(context)!.sosRemoveAction,
                 style: AppTheme.labelMedium.copyWith(color: AppTheme.error)),
           ),
         ],
