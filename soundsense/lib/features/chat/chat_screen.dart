@@ -5,6 +5,7 @@ import '../../core/services/chat_service.dart';
 
 import '../../core/services/sound_intelligence_hub.dart';
 import '../../shared/widgets/sound_sense_bottom_nav_bar.dart';
+import 'package:soundsense/l10n/generated/app_localizations.dart';
 
 class ChatScreen extends StatefulWidget {
   final List<String> recentSounds;
@@ -27,12 +28,17 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     _chatService.updateRecentSounds(widget.recentSounds);
+  }
 
-    _messages.add(ChatMessage(
-      text:
-          "Hi! 👋 I'm your SoundSense assistant powered by AI. I can help you understand sounds, answer questions about your environment, or just chat. How can I help you today?",
-      isUser: false,
-    ));
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_messages.isEmpty) {
+       _messages.add(ChatMessage(
+        text: AppLocalizations.of(context)!.chatWelcome,
+        isUser: false,
+      ));
+    }
   }
 
   void _sendMessage() async {
@@ -129,7 +135,7 @@ class _ChatScreenState extends State<ChatScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('AI Assistant', style: Theme.of(context).textTheme.headlineLarge),
+                Text(AppLocalizations.of(context)!.chatAiAssistant, style: Theme.of(context).textTheme.headlineLarge),
                 Row(
                   children: [
                     Container(
@@ -142,7 +148,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                     const SizedBox(width: 6),
                     Text(
-                      'Online • Gemini AI',
+                      AppLocalizations.of(context)!.chatStatusOnline,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.success),
                     ),
                   ],
@@ -177,7 +183,7 @@ class _ChatScreenState extends State<ChatScreen> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Recent: ${widget.recentSounds.take(3).join(", ")}',
+              '${AppLocalizations.of(context)!.chatRecent} ${widget.recentSounds.take(3).join(", ")}',
               style: AppTheme.bodySmall.copyWith(color: AppTheme.primary),
               overflow: TextOverflow.ellipsis,
             ),
@@ -358,7 +364,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         textInputAction: TextInputAction.send,
                         onSubmitted: (_) => _sendMessage(),
                         decoration: InputDecoration(
-                          hintText: 'Ask me anything...',
+                          hintText: AppLocalizations.of(context)!.chatInputHint,
                           hintStyle: Theme.of(context).inputDecorationTheme.hintStyle,
                           border: InputBorder.none,
                           focusedBorder: InputBorder.none,
@@ -413,8 +419,7 @@ class _ChatScreenState extends State<ChatScreen> {
     setState(() {
       _messages.clear();
       _messages.add(ChatMessage(
-        text:
-            "Chat cleared! 🧹 I'm ready to help you with anything. What would you like to know?",
+        text: AppLocalizations.of(context)!.chatCleared,
         isUser: false,
       ));
     });

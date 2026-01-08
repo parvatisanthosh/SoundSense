@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/services/sound_intelligence_hub.dart';
 import '../../shared/widgets/sound_sense_bottom_nav_bar.dart';
+import 'package:soundsense/l10n/generated/app_localizations.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
@@ -52,7 +53,7 @@ class NotificationsScreen extends StatelessWidget {
           ),
           const SizedBox(width: 16),
           Text(
-            'Notifications',
+            AppLocalizations.of(context)!.notificationsTitle,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurface,
               fontSize: 24,
@@ -139,7 +140,7 @@ class NotificationsScreen extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      _formatTime(event.timestamp),
+                      _formatTime(context, event.timestamp),
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
                         fontSize: 12,
@@ -163,7 +164,7 @@ class NotificationsScreen extends StatelessWidget {
                    Padding(
                      padding: const EdgeInsets.only(top: 4.0),
                      child: Text(
-                      'Speaker: ${event.speakerName} ${(event.speakerConfidence * 100).toInt()}%',
+                      '${AppLocalizations.of(context)!.notificationsSpeaker} ${event.speakerName} ${(event.speakerConfidence * 100).toInt()}%',
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
                         fontSize: 12,
@@ -178,12 +179,12 @@ class NotificationsScreen extends StatelessWidget {
     );
   }
 
-  String _formatTime(DateTime timestamp) {
+  String _formatTime(BuildContext context, DateTime timestamp) {
     final now = DateTime.now();
     final diff = now.difference(timestamp);
-    if (diff.inMinutes < 1) return 'Just now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
+    if (diff.inMinutes < 1) return AppLocalizations.of(context)!.notificationTimeJustNow;
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago'; // TODO: Localize duration
+    if (diff.inHours < 24) return '${diff.inHours}h ago'; // TODO: Localize duration
     return '${timestamp.day}/${timestamp.month}';
   }
 

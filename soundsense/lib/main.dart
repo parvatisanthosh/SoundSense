@@ -18,6 +18,8 @@ import 'features/chat/chat_screen.dart';
 import 'features/sos/emergency_contacts_screen.dart';
 import 'features/notifications/notifications_screen.dart';
 import 'features/speaker_recognition/speaker_recognition_screen.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:soundsense/l10n/generated/app_localizations.dart';
 
 void main() async {
    
@@ -72,25 +74,33 @@ class SoundSenseApp extends StatelessWidget {
           systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
         ));
         
-        return MaterialApp(
-          title: 'Dhwani',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.lightTheme,
-          darkTheme: AppTheme.darkTheme,
-          themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
-          initialRoute: '/splash',
-          routes: {
-            '/splash': (context) => const SplashScreen(),
-            '/': (context) => const DashboardScreen(),
-            '/sleep_mode': (context) => const SleepModeScreen(),
-            '/transcription': (context) => const EnhancedTranscriptionScreen(),
-            '/sound-training': (context) => const SoundTrainingScreen(),
-            '/voice-training': (context) => const AzureVoiceTrainingScreen(),
-            '/speaker-recognition': (context) => const SpeakerRecognitionScreen(),
-            '/settings': (context) => const SettingsScreen(),
-            '/emergency': (context) => const EmergencyContactsScreen(),
-            '/notifications': (context) => const NotificationsScreen(),
-            '/chat': (context) => const ChatScreen(),
+        return ValueListenableBuilder<Locale>(
+          valueListenable: SettingsService().localeNotifier,
+          builder: (context, locale, child) {
+            return MaterialApp(
+              title: 'Dhwani',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+              locale: locale,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              supportedLocales: AppLocalizations.supportedLocales,
+              initialRoute: '/splash',
+              routes: {
+                '/splash': (context) => const SplashScreen(),
+                '/': (context) => const DashboardScreen(),
+                '/sleep_mode': (context) => const SleepModeScreen(),
+                '/transcription': (context) => const EnhancedTranscriptionScreen(),
+                '/sound-training': (context) => const SoundTrainingScreen(),
+                '/voice-training': (context) => const AzureVoiceTrainingScreen(),
+                '/speaker-recognition': (context) => const SpeakerRecognitionScreen(),
+                '/settings': (context) => const SettingsScreen(),
+                '/emergency': (context) => const EmergencyContactsScreen(),
+                '/notifications': (context) => const NotificationsScreen(),
+                '/chat': (context) => const ChatScreen(),
+              },
+            );
           },
         );
       },

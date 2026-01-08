@@ -26,6 +26,7 @@ import '../sos/emergency_contacts_screen.dart';
 import '../sos/sos_countdown_screen.dart';
 import '../speaker_recognition/speaker_recognition_screen.dart';
 import '../../shared/widgets/critical_alerts.dart';
+import 'package:soundsense/l10n/generated/app_localizations.dart';
 import '../../shared/widgets/sound_grid.dart';
 import '../../shared/widgets/sound_sense_bottom_nav_bar.dart';
 
@@ -671,22 +672,12 @@ class _DashboardScreenState extends State<DashboardScreen>
       child: Row(
         children: [
           // App Icon
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: const Color(0xFFE8BEAC),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Center(
-              child: Container(
-                width: 28,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
+          ClipOval(
+            child: Image.asset(
+              'assets/images/app_logo.jpg',
+              width: 56,
+              height: 56,
+              fit: BoxFit.cover,
             ),
           ),
           const SizedBox(width: 16),
@@ -697,14 +688,14 @@ class _DashboardScreenState extends State<DashboardScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _isListening ? 'Listening' : 'Ready',
+                  _isListening ? AppLocalizations.of(context)!.dashboardListening : AppLocalizations.of(context)!.dashboardGreeting,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                     fontSize: 14,
                   ),
                 ),
                 Text(
-                  'SoundSense',
+                  AppLocalizations.of(context)!.appTitle,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 24,
@@ -747,7 +738,7 @@ IconButton(
             ),
             const SizedBox(height: 16),
             Text(
-              'Tap microphone to start',
+              AppLocalizations.of(context)!.dashboardListeningPrompt,
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                 fontSize: 18,
@@ -773,7 +764,7 @@ IconButton(
           // ✅ NEW: Transcript history
           if (_transcriptHistory.isNotEmpty) ...[
             Text(
-              'Recent Speech',
+              AppLocalizations.of(context)!.recentSpeech,
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                 fontSize: 14,
@@ -793,7 +784,7 @@ IconButton(
             _buildListeningIndicator()
           else if (_detectedSounds.isNotEmpty) ...[
             Text(
-              'Detected Sounds',
+              AppLocalizations.of(context)!.detectedSounds,
               style: TextStyle(
                 color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                 fontSize: 14,
@@ -1143,6 +1134,11 @@ IconButton(
     return '${time.hour}:${time.minute.toString().padLeft(2, '0')}';
   }
 
+
+
+
+
+
   Widget _buildControlCenter() {
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1152,7 +1148,6 @@ IconButton(
       ),
       child: Column(
         children: [
-          // Quick actions with speaker recognition
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -1179,36 +1174,16 @@ IconButton(
             ],
           ),
           const SizedBox(height: 16),
-          
-          // Activity summary
           if (_isListening)
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (_detectedSounds.isNotEmpty)
-                  Text(
-                    '${_detectedSounds.length} sounds',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.6),
-                      fontSize: 14,
-                    ),
-                  ),
+                  Text('${_detectedSounds.length} sounds', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 14)),
                 if (_detectedSounds.isNotEmpty && _transcriptHistory.isNotEmpty)
-                  Text(
-                    ' • ',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.4),
-                      fontSize: 14,
-                    ),
-                  ),
+                  Text(' • ', style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 14)),
                 if (_transcriptHistory.isNotEmpty)
-                  Text(
-                    '${_transcriptHistory.length} transcripts',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.6),
-                      fontSize: 14,
-                    ),
-                  ),
+                  Text('${_transcriptHistory.length} transcripts', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 14)),
               ],
             ),
         ],
@@ -1216,32 +1191,18 @@ IconButton(
     );
   }
 
-  Widget _buildQuickAction({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
+  Widget _buildQuickAction({required IconData icon, required String label, required VoidCallback onTap}) {
     return GestureDetector(
       onTap: onTap,
       child: Column(
         children: [
           Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardTheme.color,
-              shape: BoxShape.circle,
-            ),
+            width: 56, height: 56,
+            decoration: BoxDecoration(color: Theme.of(context).cardTheme.color, shape: BoxShape.circle),
             child: Icon(icon, color: const Color(0xFF4A9FFF)),
           ),
           const SizedBox(height: 8),
-          Text(
-            label,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface,
-              fontSize: 12,
-            ),
-          ),
+          Text(label, style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 12)),
         ],
       ),
     );
@@ -1249,17 +1210,13 @@ IconButton(
 
   Widget _buildBottomNav() {
     return SoundSenseBottomNavBar(
-      currentIndex: 0, // Home
+      currentIndex: 0,
       isListening: _isListening,
       onMicTap: _toggleListening,
       onTap: (index) {
-        if (index == 3) { // Settings
-          Navigator.pushNamed(context, '/settings');
-        } else if (index == 2) { // Notifications
-          Navigator.pushNamed(context, '/notifications');
-        } else if (index == 1) { // Chat
-          Navigator.pushNamed(context, '/chat');
-        }
+        if (index == 1) Navigator.pushNamed(context, '/chat');
+        if (index == 2) Navigator.pushNamed(context, '/notifications');
+        if (index == 3) Navigator.pushNamed(context, '/settings');
       },
     );
   }

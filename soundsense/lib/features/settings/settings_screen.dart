@@ -5,6 +5,7 @@ import '../../core/services/sleep_scheduler_service.dart';
 import '../sos/emergency_contacts_screen.dart';
 import '../../core/services/sound_intelligence_hub.dart' hide TimeOfDay;
 import '../../shared/widgets/sound_sense_bottom_nav_bar.dart';
+import 'package:soundsense/l10n/generated/app_localizations.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -455,14 +456,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               color: const Color(0xFFE8BEAC),
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Center(
-              child: Container(
-                width: 28,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(4),
-                ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: Image.asset(
+                'assets/images/app_logo.jpg',
+                fit: BoxFit.cover,
               ),
             ),
           ),
@@ -474,7 +472,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Settings',
+                  AppLocalizations.of(context)!.settingsTitle,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 28,
@@ -821,7 +819,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             icon: _settings.isDarkMode ? Icons.dark_mode : Icons.light_mode,
             iconColor: const Color(0xFF4A9FFF),
             iconBgColor: const Color(0xFF4A9FFF).withOpacity(0.2),
-            title: _settings.isDarkMode ? 'Dark Mode' : 'Light Mode',
+            title: _settings.isDarkMode ? AppLocalizations.of(context)!.settingsDarkMode : AppLocalizations.of(context)!.settingsDarkMode,
             subtitle: _settings.isDarkMode ? 'On' : 'Off',
             value: _settings.isDarkMode,
             onChanged: (value) async {
@@ -830,6 +828,66 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
           
+          Divider(color: Colors.white.withOpacity(0.05), height: 1),
+          
+          GestureDetector(
+            onTap: () {
+              _showLanguageDialog();
+            },
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Theme.of(context).scaffoldBackgroundColor,
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF9C27B0).withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.language,
+                      color: Color(0xFF9C27B0),
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          AppLocalizations.of(context)!.settingsLanguage,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          _settings.locale.languageCode == 'hi' ? 'Hindi' : 'English',
+                          style: TextStyle(
+                            color: Theme.of(context).textTheme.bodyMedium?.color,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.arrow_forward_ios,
+                    color: Color(0xFF9DABB9),
+                    size: 16,
+                  ),
+                ],
+              ),
+            ),
+          ),
+
           Divider(color: Colors.white.withOpacity(0.05), height: 1),
           
           GestureDetector(
@@ -1023,6 +1081,64 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showLanguageDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A2632),
+        title: const Text(
+          'Select Language',
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('English', style: TextStyle(color: Colors.white)),
+              leading: Radio<String>(
+                value: 'en',
+                groupValue: _settings.locale.languageCode,
+                activeColor: const Color(0xFF4A9FFF),
+                onChanged: (value) async {
+                  if (value != null) {
+                    await _settings.setLocale(value);
+                    Navigator.pop(context);
+                    setState(() {});
+                  }
+                },
+              ),
+              onTap: () async {
+                await _settings.setLocale('en');
+                Navigator.pop(context);
+                setState(() {});
+              },
+            ),
+            ListTile(
+              title: const Text('Hindi', style: TextStyle(color: Colors.white)),
+              leading: Radio<String>(
+                value: 'hi',
+                groupValue: _settings.locale.languageCode,
+                activeColor: const Color(0xFF4A9FFF),
+                onChanged: (value) async {
+                  if (value != null) {
+                    await _settings.setLocale(value);
+                    Navigator.pop(context);
+                    setState(() {});
+                  }
+                },
+              ),
+              onTap: () async {
+                await _settings.setLocale('hi');
+                Navigator.pop(context);
+                setState(() {});
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
