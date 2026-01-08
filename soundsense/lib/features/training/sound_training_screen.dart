@@ -107,7 +107,6 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
             ),
           ),
         ),
-        _buildBottomNav(false),
       ],
     );
   }
@@ -314,7 +313,6 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
             ),
           ),
         ),
-        _buildBottomNav(true),
       ],
     );
   }
@@ -440,39 +438,7 @@ class _SoundTrainingScreenState extends State<SoundTrainingScreen> {
     );
   }
 
-  Widget _buildBottomNav(bool isTraining) {
-    return Container(
-      height: 100,
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-      decoration: BoxDecoration(color: Theme.of(context).bottomNavigationBarTheme.backgroundColor, borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          _buildNavItem(Icons.grid_view_rounded, 'background\nnoise', false),
-          _buildNavItem(Icons.add_circle, '', !isTraining),
-          _buildNavItem(Icons.history, 'variations', false),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildNavItem(IconData icon, String label, bool isActive) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(color: isActive ? const Color(0xFF4A9FFF) : Colors.transparent, borderRadius: BorderRadius.circular(16)),
-          child: Icon(icon, color: isActive ? Colors.white : Theme.of(context).colorScheme.onSurface.withOpacity(0.6), size: isActive ? 32 : 28),
-        ),
-        if (label.isNotEmpty) ...[
-          const SizedBox(height: 4),
-          Text(label, textAlign: TextAlign.center, style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), fontSize: 10)),
-        ],
-      ],
-    );
-  }
 
   // ============================================================
   // Actions - EXACTLY THE SAME AS YOUR ORIGINAL
