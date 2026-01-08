@@ -1,25 +1,32 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import '../../shared/widgets/sound_card.dart';
+import 'package:flutter_animate/flutter_animate.dart';
+import 'package:lottie/lottie.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/models/detected_sound.dart';
 import '../../core/models/sound_category.dart';
 import '../../core/services/haptic_service.dart';
-import '../../core/services/audio_service.dart';
-import '../../core/services/sound_classifier.dart';
+import '../../core/services/settings_service.dart';
+import '../../core/services/animation_service.dart';
+import '../../core/services/custom_sound_service.dart';
+import '../../core/services/tts_alert_service.dart';
+// THE BRAIN - Intelligence Hub coordinates everything!
+import '../../core/services/sound_intelligence_hub.dart';
+// SOS Services
+import '../../core/services/sos_service.dart';
+import '../../core/services/sms_service.dart';
+import '../../core/services/location_service.dart';
+// Screens
 import '../chat/chat_screen.dart';
 import '../settings/settings_screen.dart';
-import '../../core/services/settings_service.dart';
-import 'package:flutter_animate/flutter_animate.dart';
-import '../../shared/widgets/critical_alerts.dart';
-import '../../core/services/animation_service.dart';
-import '../../shared/widgets/sound_grid.dart';
 import '../training/sound_training_screen.dart';
-import '../transcription/enhanced_transcription_screen.dart';
-import '../../core/services/custom_sound_service.dart';
-import 'dart:typed_data';
 import '../training/azure_voice_training_screen.dart';
-import '../../core/services/tts_alert_service.dart';
-import 'package:lottie/lottie.dart';
+import '../transcription/enhanced_transcription_screen.dart';
+import '../sos/emergency_contacts_screen.dart';
+import '../sos/sos_countdown_screen.dart';
+import '../speaker_recognition/speaker_recognition_screen.dart';
+import '../../shared/widgets/critical_alerts.dart';
+import '../../shared/widgets/sound_grid.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -30,29 +37,90 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen>
     with TickerProviderStateMixin {
-  final AudioService _audioService = AudioService();
-  final SoundClassifier _classifier = SoundClassifier();
-  final SettingsService _settings = SettingsService();
   
+  // ============================================================
+  // THE INTELLIGENCE HUB - Replaces all separate services!
+  // ============================================================
+  final SoundIntelligenceHub _hub = SoundIntelligenceHub();
+  
+  // Settings (still needed for UI)
+  final SettingsService _settings = SettingsService();
+  final SOSService _sosService = SOSService.instance;
+
+  // UI State
   bool _isListening = false;
-  bool _isModelLoaded = false;
   double _currentDecibel = 0;
   List<DetectedSound> _detectedSounds = [];
-  List<double> _audioBuffer = [];
   DetectedSound? _currentSound;
   bool _showCriticalAlert = false;
+  
+  // ✅ NEW: Speech-to-text state
+  String _currentTranscription = '';
+  String _partialTranscription = '';
+  final List<TranscriptionEntry> _transcriptHistory = [];
+  
+  // SOS state
+  bool _showSOSCountdown = false;
+  bool _showSOSSent = false;
+  int _sosContactsNotified = 0;
 
+  // Smart suggestions from hub
+  SmartSuggestion? _currentSuggestion;
+
+  // Your floating animations
   late List<AnimationController> _floatControllers;
   late List<Animation<double>> _floatAnimations;
 
   @override
   void initState() {
     super.initState();
-    _initializeClassifier();
-    _setupAudioCallbacks();
-    _checkCustomSounds();
-    TTSAlertService.instance.initialize();
+    _initializeHub();
     _initializeFloatingAnimations();
+    _initializeSOS();
+  }
+
+  // ============================================================
+  // INITIALIZATION - Much simpler now!
+  // ============================================================
+
+  /// Initialize the Intelligence Hub
+  /// 
+  /// This ONE method sets up EVERYTHING:
+  /// - YAMNet model
+  /// - Custom sounds
+  /// - TTS
+  /// - SOS
+  /// - Settings
+  /// - Speaker Recognition
+  /// - Speech-to-Text ✅ NEW
+  /// All coordinated by the hub!
+  Future<void> _initializeHub() async {
+    try {
+      print('🚀 Dashboard: Initializing Intelligence Hub with Speech-to-Text...');
+      
+      // Initialize the hub (it handles everything)
+      await _hub.initialize();
+      
+      // Listen to hub's sound events
+      _hub.soundEventStream.listen(_onSmartSoundEvent);
+      
+      // Listen to hub's emergency events
+      _hub.emergencyStream.listen(_onEmergencyEvent);
+      
+      // Listen to hub's smart suggestions
+      _hub.suggestionStream.listen(_onSmartSuggestion);
+      
+      // Listen to speaker events
+      _hub.speakerEventStream.listen(_onSpeakerEvent);
+      
+      // ✅ NEW: Listen to transcription events
+      _hub.transcriptionStream.listen(_onTranscription);
+      
+      print('✅ Dashboard: Hub initialized with Sound + Speaker + Speech-to-Text!');
+    } catch (e) {
+      print('❌ Dashboard: Hub initialization error: $e');
+      _showError('Failed to initialize: $e');
+    }
   }
 
   void _initializeFloatingAnimations() {
@@ -72,195 +140,243 @@ class _DashboardScreenState extends State<DashboardScreen>
     }).toList();
   }
 
-  Future<void> _checkCustomSounds() async {
-    final customSoundService = CustomSoundService.instance;
-    await customSoundService.initialize();
-    print('🔊 Custom sounds saved: ${customSoundService.customSounds.length}');
+  Future<void> _initializeSOS() async {
+    await _sosService.initialize();
+    await LocationService.instance.initialize();
   }
 
-  Future<void> _initializeClassifier() async {
-    await _classifier.initialize();
+  // ============================================================
+  // HUB EVENT HANDLERS - Hub tells us what to display!
+  // ============================================================
+
+  /// Handle smart sound event from hub
+  /// 
+  /// Hub has already:
+  /// - Detected the sound (YAMNet or custom)
+  /// - Triggered TTS announcement
+  /// - Vibrated if needed
+  /// - Checked for SOS
+  /// 
+  /// We just need to UPDATE THE UI!
+  void _onSmartSoundEvent(SmartSoundEvent event) {
+    print('🎯 Dashboard received sound event: ${event.displayName}');
+    
     setState(() {
-      _isModelLoaded = _classifier.isReady;
-    });
-    if (_isModelLoaded) {
-      print('AI Model loaded successfully!');
-    } else {
-      print('Failed to load AI model');
-    }
-  }
-
-  void _setupAudioCallbacks() {
-    _audioService.onNoiseLevel = (double decibel) {
-      setState(() {
-        _currentDecibel = decibel;
-      });
-    };
-
-    _audioService.onAudioData = (List<double> audioData) {
-      _audioBuffer.addAll(audioData);
+      // Convert to DetectedSound for UI
+      final detectedSound = event.toDetectedSound();
       
-      if (_audioBuffer.length >= 15600) {
-        _classifyAudio();
+      _detectedSounds.insert(0, detectedSound);
+      _currentSound = detectedSound;
+      
+      // Keep only recent 50 sounds
+      if (_detectedSounds.length > 50) {
+        _detectedSounds = _detectedSounds.sublist(0, 50);
       }
-    };
-  }
-
-  Future<void> _classifyAudio() async {
-    if (!_isModelLoaded || _audioBuffer.length < 15600) return;
-
-    final samples = _audioBuffer.sublist(0, 15600);
-    _audioBuffer = _audioBuffer.sublist(15600);
-    final audioBytes = _samplesToBytes(samples);
-
-    final customMatch = await CustomSoundService.instance.detectCustomSound(audioBytes);
-    if (customMatch != null) {
-      print('🎯 Custom sound detected: ${customMatch.displayName} (${customMatch.confidencePercent}%)');
-      TTSAlertService.instance.speakAlert(customMatch.displayName, priority: 'important');
       
-      final customDetected = DetectedSound(
-        name: '⭐ ${customMatch.displayName}',
-        category: customMatch.sound.category,
-        confidence: customMatch.confidence,
-        timestamp: DateTime.now(),
-        priority: 'important',
-      );
-      
-      setState(() {
-        _detectedSounds.insert(0, customDetected);
-        _currentSound = customDetected;
-        if (_detectedSounds.length > 20) {
-          _detectedSounds = _detectedSounds.sublist(0, 20);
-        }
-      });
-      
-      HapticService.vibrate('important');
-      return;
-    }
-
-    final results = await _classifier.classify(samples);
-    if (results.isNotEmpty) {
-      for (var result in results) {
-        final priority = SoundCategory.getPriority(result.label);
-
-        if (!_settings.shouldShowSound(priority)) continue;
-
-        if (_settings.vibrationEnabled &&
-            (priority == 'critical' || priority == 'important')) {
-          HapticService.vibrate(priority);
-        }
-
-        final exists = _detectedSounds.any((s) => s.name == result.label);
-        if (exists) continue;
-
-        final newSound = DetectedSound(
-          name: result.label,
-          category: _getCategoryForSound(result.label),
-          confidence: result.confidence,
-          timestamp: DateTime.now(),
-          priority: priority,
-        );
-
-        TTSAlertService.instance.speakAlert(result.label, priority: priority);
-
-        setState(() {
-          _detectedSounds.insert(0, newSound);
-          _currentSound = newSound;
-
-          if (AnimationService.isCriticalAlert(result.label)) {
-            _showCriticalAlert = true;
-          }
-
-          if (_detectedSounds.length > 20) {
-            _detectedSounds = _detectedSounds.sublist(0, 20);
+      // Show critical alert if needed
+      if (event.priority == 'critical') {
+        _showCriticalAlert = true;
+        
+        // Auto-dismiss after 5 seconds
+        Future.delayed(const Duration(seconds: 5), () {
+          if (mounted) {
+            setState(() => _showCriticalAlert = false);
           }
         });
       }
-    }
+    });
   }
 
-  Uint8List _samplesToBytes(List<double> samples) {
-    final bytes = Uint8List(samples.length * 2);
-    for (int i = 0; i < samples.length; i++) {
-      int sample = (samples[i] * 32768).round().clamp(-32768, 32767);
-      if (sample < 0) sample += 65536;
-      bytes[i * 2] = sample & 0xFF;
-      bytes[i * 2 + 1] = (sample >> 8) & 0xFF;
+  /// Handle emergency event from hub
+  /// 
+  /// Hub detected critical pattern and wants to trigger SOS
+  void _onEmergencyEvent(EmergencyEvent event) async {
+    print('🚨 Dashboard received emergency: ${event.sounds}');
+    
+    setState(() {
+      _showSOSCountdown = true;
+    });
+    
+    // Get current location for SOS
+    String location = 'Unknown';
+    try {
+      final position = await LocationService.instance.getCurrentPosition();
+      if (position != null) {
+        location = '${position.latitude.toStringAsFixed(4)}°N, ${position.longitude.toStringAsFixed(4)}°E';
+      }
+    } catch (e) {
+      print('Failed to get location: $e');
     }
-    return bytes;
+    
+    // Navigate to SOS countdown screen
+    if (!mounted) return;
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SOSCountdownScreen(
+          detectedSounds: event.sounds,
+          location: location,
+          onCancel: () {
+            setState(() => _showSOSCountdown = false);
+            Navigator.pop(context);
+          },
+         onSendSOS: () async {
+  // Send SOS
+  final result = await SMSService.instance.sendSOSToContacts(event.sounds);
+  
+  // ✅ Check if widget is still mounted before Navigator
+  if (!mounted) return;
+  
+  setState(() {
+    _showSOSCountdown = false;
+    _showSOSSent = true;
+    _sosContactsNotified = result.contactsNotified;
+  });
+  
+  Navigator.pop(context);
+  
+  // Show result
+  if (mounted && result.success) {
+    _showSnackbar('✓ ${result.message}');
+  }
+},
+        ),
+      ),
+    );
   }
 
-  String _getCategoryForSound(String soundName) {
-    final lower = soundName.toLowerCase();
-    if (lower.contains('car') || lower.contains('horn') || lower.contains('siren')) {
-      return 'Traffic';
-    } else if (lower.contains('dog') || lower.contains('cat') || lower.contains('bird')) {
-      return 'Animal';
-    } else if (lower.contains('music') || lower.contains('singing')) {
-      return 'Music';
-    } else if (lower.contains('speech') || lower.contains('talk')) {
-      return 'Speech';
-    } else if (lower.contains('door') || lower.contains('knock')) {
-      return 'Home';
-    }
-    return 'Other';
+  /// Handle smart suggestion from hub
+  /// 
+  /// Hub suggests improvements (e.g., "Train this sound?")
+  void _onSmartSuggestion(SmartSuggestion suggestion) {
+    print('💡 Dashboard received suggestion: ${suggestion.message}');
+    
+    setState(() {
+      _currentSuggestion = suggestion;
+    });
+    
+    // Show suggestion for 8 seconds
+    Future.delayed(const Duration(seconds: 8), () {
+      if (mounted) {
+        setState(() => _currentSuggestion = null);
+      }
+    });
   }
 
-  @override
-  void dispose() {
-    _audioService.dispose();
-    _classifier.dispose();
-    for (var controller in _floatControllers) {
-      controller.dispose();
-    }
-    super.dispose();
+  /// Handle speaker event from hub
+  /// 
+  /// Shows who is currently speaking
+  void _onSpeakerEvent(SpeakerEvent event) {
+    print('👤 Dashboard received speaker event: ${event.speakerName ?? "Unknown"} (${(event.confidence * 100).toStringAsFixed(1)}%)');
+    
+    // Visual feedback is handled in sound events and transcriptions
   }
 
-  void _toggleListening() async {
+  /// ✅ NEW: Handle transcription event from hub
+  /// 
+  /// Shows what people are saying in real-time
+  void _onTranscription(TranscriptionEvent event) {
+    setState(() {
+      if (event.isFinal) {
+        // Final transcription - save to history
+        _transcriptHistory.insert(0, TranscriptionEntry(
+          text: event.text,
+          speakerName: event.speakerName ?? 'Unknown',
+          confidence: event.speakerConfidence,
+          timestamp: event.timestamp,
+        ));
+        
+        // Keep only last 50 transcriptions
+        if (_transcriptHistory.length > 50) {
+          _transcriptHistory.removeAt(_transcriptHistory.length - 1);
+        }
+        
+        _currentTranscription = event.text;
+        _partialTranscription = '';
+        
+        print('🗣️ Dashboard: Final transcription from ${event.speakerName ?? "Unknown"}: "${event.text}"');
+      } else {
+        // Partial transcription - show live caption
+        _partialTranscription = event.text;
+        print('🗣️ Dashboard: Live caption: "$event.text"');
+      }
+    });
+  }
+
+  // ============================================================
+  // USER ACTIONS - So simple now!
+  // ============================================================
+
+  /// Start/Stop listening - ONE button does everything!
+  Future<void> _toggleListening() async {
     if (_isListening) {
-      _audioService.stopListening();
-      setState(() {
-        _isListening = false;
-        _currentDecibel = 0;
-      });
+      await _stopListening();
     } else {
-      try {
-        await _audioService.startListening();
+      await _startListening();
+    }
+  }
+
+  /// Start listening - Hub handles EVERYTHING automatically!
+  Future<void> _startListening() async {
+    try {
+      print('🎤 Dashboard: Starting listening with Speech-to-Text...');
+      
+      // Hub starts everything:
+      // - Audio service
+      // - Sound detection (YAMNet + custom)
+      // - Speaker recognition
+      // - Speech-to-text ✅ NEW
+      // - TTS ready
+      // - SOS monitoring
+      // - All coordinated!
+      final success = await _hub.startListening(mode: ListeningMode.normal);
+      
+      if (success) {
         setState(() {
           _isListening = true;
+          _detectedSounds.clear();
+          _transcriptHistory.clear(); // ✅ NEW
+          _currentTranscription = ''; // ✅ NEW
+          _partialTranscription = ''; // ✅ NEW
         });
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Microphone permission denied'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        print('✅ Dashboard: Listening started with transcription!');
+      } else {
+        _showError('Failed to start listening');
       }
+    } catch (e) {
+      print('❌ Dashboard: Start error: $e');
+      _showError('Error: $e');
     }
   }
 
-  void _testTTS() async {
-    print('🔊 Testing TTS...');
-    await TTSAlertService.instance.initialize();
-    await TTSAlertService.instance.speak('Hello! Doorbell detected. TTS is working.');
-    print('🔊 TTS speak called');
+  /// Stop listening
+  Future<void> _stopListening() async {
+    print('🛑 Dashboard: Stopping...');
+    
+    await _hub.stopListening();
+    
+    setState(() {
+      _isListening = false;
+    });
+    
+    print('✅ Dashboard: Stopped');
   }
 
+  /// User feedback - Help hub learn!
   void _onSoundTap(DetectedSound sound) {
-    HapticService.vibrate(sound.priority);
-
     showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF1A2632),
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (context) => Container(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Sound info
             Text(
               sound.name,
               style: const TextStyle(
@@ -269,71 +385,136 @@ class _DashboardScreenState extends State<DashboardScreen>
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 16),
-            _buildInfoRow('Category', sound.category),
-            _buildInfoRow('Confidence', '${(sound.confidence * 100).toInt()}%'),
-            _buildInfoRow('Priority', sound.priority.toUpperCase()),
-            _buildInfoRow('Time', _formatTime(sound.timestamp)),
-            const SizedBox(height: 20),
+            const SizedBox(height: 8),
+            Text(
+              '${(sound.confidence * 100).toStringAsFixed(0)}% confident',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.6),
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 24),
+            
+            // Feedback buttons
+            Row(
+              children: [
+                Expanded(
+                  child: _buildFeedbackButton(
+                    icon: Icons.check_circle,
+                    label: 'Correct',
+                    color: Colors.green,
+                    onTap: () {
+                      _hub.confirmSound(sound.name, correct: true);
+                      Navigator.pop(context);
+                      _showSnackbar('✓ Thanks! I\'ll remember this');
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildFeedbackButton(
+                    icon: Icons.cancel,
+                    label: 'Wrong',
+                    color: Colors.red,
+                    onTap: () {
+                      _hub.confirmSound(sound.name, correct: false);
+                      Navigator.pop(context);
+                      _showSnackbar('✓ Noted! I\'ll improve');
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildFeedbackButton(
+              icon: Icons.close,
+              label: 'Dismiss (Don\'t show again)',
+              color: Colors.orange,
+              onTap: () {
+                _hub.dismissSound(sound.name);
+                Navigator.pop(context);
+                _showSnackbar('✓ I won\'t show "${sound.name}" anymore');
+              },
+            ),
+            const SizedBox(height: 12),
+            _buildFeedbackButton(
+              icon: Icons.mic,
+              label: 'Train This Sound',
+              color: const Color(0xFF4A9FFF),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.pushNamed(context, '/sound-training');
+              },
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(color: Color(0xFF9DABB9), fontSize: 16)),
-          Text(value, style: const TextStyle(color: Colors.white, fontSize: 16)),
-        ],
+  Widget _buildFeedbackButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withOpacity(0.5)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  String _formatTime(DateTime time) {
-    final now = DateTime.now();
-    final difference = now.difference(time);
-    
-    if (difference.inMinutes < 1) return 'Just now';
-    if (difference.inMinutes < 60) return '${difference.inMinutes}m ago';
-    if (difference.inHours < 24) return '${difference.inHours}h ago';
-    return '${difference.inDays}d ago';
+  void _showSnackbar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFF4A9FFF),
+      ),
+    );
   }
 
-  Color _getColorForPriority(String priority) {
-    switch (priority) {
-      case 'critical':
-        return const Color(0xFFFF4757);
-      case 'important':
-        return const Color(0xFFFFA502);
-      case 'normal':
-        return const Color(0xFF137FEC);
-      default:
-        return const Color(0xFF2ED573);
-    }
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Colors.red,
+      ),
+    );
   }
 
-  IconData _getIconForSound(String soundName) {
-    final lower = soundName.toLowerCase();
-    if (lower.contains('dog') || lower.contains('bark')) return Icons.pets;
-    if (lower.contains('door') || lower.contains('bell')) return Icons.notifications;
-    if (lower.contains('alarm') || lower.contains('fire')) return Icons.alarm;
-    if (lower.contains('baby') || lower.contains('cry')) return Icons.child_care;
-    if (lower.contains('car') || lower.contains('horn')) return Icons.directions_car;
-    if (lower.contains('silence') || lower.contains('mute')) return Icons.volume_off;
-    if (lower.contains('pencil') || lower.contains('write')) return Icons.edit;
-    if (lower.contains('ping')) return Icons.notifications_active;
-    return Icons.graphic_eq;
-  }
+  // ============================================================
+  // UI BUILD - Your beautiful design with transcriptions!
+  // ============================================================
 
   @override
   Widget build(BuildContext context) {
+    // Your critical alert
     if (_showCriticalAlert && _currentSound != null) {
-      return CriticalAlert(
+      return CriticalSoundAlert(
         soundName: _currentSound!.name,
         confidence: _currentSound!.confidence,
         onDismiss: () {
@@ -344,582 +525,723 @@ class _DashboardScreenState extends State<DashboardScreen>
       );
     }
 
-    final recentSounds = _detectedSounds.take(5).toList();
+    // SOS confirmation
+    if (_showSOSSent) {
+      return Scaffold(
+        backgroundColor: const Color(0xFF0F1419),
+        body: Center(
+          child: Container(
+            margin: const EdgeInsets.all(32),
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Colors.green.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: Colors.green, width: 2),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.check_circle, color: Colors.green, size: 64),
+                const SizedBox(height: 16),
+                const Text(
+                  '✓ SOS Sent!',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '$_sosContactsNotified contacts notified',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 18,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
     return Scaffold(
       backgroundColor: const Color(0xFF0F1419),
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            _buildSimpleHeader(),
-            _buildListeningStatus(),
-            Expanded(child: _buildFloatingBubblesView(recentSounds)),
-            _buildQuickActions(),
-            _buildBottomNav(),
+            // Lottie background (your design)
+            Positioned.fill(
+              child: Lottie.asset(
+                'assets/animations/bloob.json',
+                fit: BoxFit.cover,
+                repeat: true,
+              ),
+            ),
+
+            // Main content
+            Column(
+              children: [
+                _buildHeader(),
+                Expanded(child: _buildSoundDetectionArea()),
+                _buildControlCenter(),
+                _buildBottomNav(),
+              ],
+            ),
+
+            // Smart suggestion overlay
+            if (_currentSuggestion != null)
+              Positioned(
+                top: 100,
+                left: 16,
+                right: 16,
+                child: _buildSmartSuggestion(_currentSuggestion!),
+              ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSimpleHeader() {
-    return Padding(
+  Widget _buildSmartSuggestion(SmartSuggestion suggestion) {
+    return Container(
       padding: const EdgeInsets.all(16),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: const BoxDecoration(
-              color: Color(0xFF1A2632),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
-          ),
-          const Text(
-            'DHWANI',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 2,
-            ),
-          ),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsScreen()),
-              );
-            },
-            child: Container(
-              width: 48,
-              height: 48,
-              decoration: const BoxDecoration(
-                color: Color(0xFF1A2632),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(Icons.settings, color: Colors.white, size: 24),
-            ),
+      decoration: BoxDecoration(
+        color: const Color(0xFF4A9FFF).withOpacity(0.95),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF4A9FFF).withOpacity(0.3),
+            blurRadius: 20,
+            spreadRadius: 2,
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildListeningStatus() {
-    if (!_isListening) return const SizedBox.shrink();
-    
-    return Center(
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A2632),
-          borderRadius: BorderRadius.circular(25),
-          border: Border.all(
-            color: const Color(0xFF00BCD4).withOpacity(0.3),
-            width: 1.5,
-          ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 10,
-              height: 10,
-              decoration: const BoxDecoration(
-                color: Color(0xFF00BCD4),
-                shape: BoxShape.circle,
-              ),
-            ).animate(onPlay: (c) => c.repeat())
-              .fadeIn(duration: 600.ms)
-              .then()
-              .fadeOut(duration: 600.ms),
-            const SizedBox(width: 10),
-            const Text(
-              'LISTENING MODE ACTIVE',
-              style: TextStyle(
-                color: Color(0xFF00BCD4),
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFloatingBubblesView(List<DetectedSound> sounds) {
-    return Stack(
-      children: [
-        // Background Lottie
-        Positioned.fill(
-          child: Opacity(
-            opacity: 0.15,
-            child: Lottie.asset(
-              'assets/animations/bloob.json',
-              fit: BoxFit.cover,
-              repeat: true,
-            ),
-          ),
-        ),
-
-        // Concentric ripple circles
-        Positioned.fill(
-          child: Center(
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                _buildRippleCircle(300, 0.05),
-                _buildRippleCircle(450, 0.03),
-                _buildRippleCircle(600, 0.02),
-              ],
-            ),
-          ),
-        ),
-
-        // Content
-        if (sounds.isEmpty)
-          Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.hearing,
-                  size: 64,
-                  color: Colors.grey.shade700,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  _isListening
-                      ? 'Listening for sounds...'
-                      : 'Tap microphone to start',
-                  style: const TextStyle(
-                    color: Color(0xFF9DABB9),
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
-          )
-        else
-          Stack(
-            children: [
-              // Critical Alert Card (if critical sound exists)
-              if (_currentSound != null && _currentSound!.priority == 'critical')
-                Positioned(
-                  top: 20,
-                  left: MediaQuery.of(context).size.width * 0.15,
-                  right: MediaQuery.of(context).size.width * 0.15,
-                  child: _buildCriticalAlertCard(),
-                ),
-
-              // Central Circle with waveform
-              Center(
-                child: Container(
-                  width: 160,
-                  height: 160,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        const Color(0xFF1A2632).withOpacity(0.8),
-                        const Color(0xFF0F1419).withOpacity(0.6),
-                      ],
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF4A9FFF).withOpacity(0.2),
-                        blurRadius: 30,
-                        spreadRadius: 10,
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.graphic_eq,
-                    color: Colors.white,
-                    size: 64,
-                  ),
-                ).animate(onPlay: (c) => c.repeat())
-                  .scale(begin: const Offset(1, 1), end: const Offset(1.05, 1.05), duration: 2000.ms)
-                  .then()
-                  .scale(begin: const Offset(1.05, 1.05), end: const Offset(1, 1), duration: 2000.ms),
-              ),
-
-              // Floating sound pills around center
-              ...sounds.asMap().entries.map((entry) {
-                final index = entry.key;
-                final sound = entry.value;
-                return _buildFloatingPill(sound, index, sounds.length);
-              }),
-            ],
-          ),
-      ],
-    );
-  }
-
-  Widget _buildRippleCircle(double size, double opacity) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: const Color(0xFF4A9FFF).withOpacity(opacity),
-          width: 1,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCriticalAlertCard() {
-    if (_currentSound == null) return const SizedBox.shrink();
-    
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A2632),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFFFF4757).withOpacity(0.3),
-          width: 2,
-        ),
-      ),
       child: Row(
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFF4757),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Icon(Icons.warning, color: Colors.white, size: 28),
-          ),
+          const Icon(Icons.lightbulb, color: Colors.white, size: 28),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _currentSound!.name,
+                  suggestion.message,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 2),
-                const Text(
-                  'CRITICAL ALERT',
+                if (suggestion.reason.isNotEmpty)
+                  Text(
+                    suggestion.reason,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.8),
+                      fontSize: 14,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          if (suggestion.type == SuggestionType.trainCustomSound)
+            TextButton(
+              onPressed: () {
+                setState(() => _currentSuggestion = null);
+                Navigator.pushNamed(context, '/sound-training');
+              },
+              child: const Text(
+                'Train',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 300.ms).slideY(begin: -0.2, end: 0);
+  }
+
+  Widget _buildHeader() {
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        children: [
+          // App Icon
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: const Color(0xFFE8BEAC),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Center(
+              child: Container(
+                width: 28,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          
+          // Title
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _isListening ? 'Listening' : 'Ready',
                   style: TextStyle(
-                    color: Color(0xFFFF4757),
-                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.6),
+                    fontSize: 14,
+                  ),
+                ),
+                const Text(
+                  'Dhwani',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ],
             ),
           ),
+          IconButton(
+  onPressed: _triggerManualSOS,
+  icon: const Icon(Icons.sos, color: Colors.red),
+  tooltip: 'Manual SOS',
+),
+IconButton(
+  onPressed: _triggerManualSleep,
+  icon: const Icon(Icons.bedtime, color: Colors.purple),
+  tooltip: 'Sleep Mode',
+),
+          // Settings button
+          IconButton(
+            onPressed: () => Navigator.pushNamed(context, '/settings'),
+            icon: const Icon(Icons.settings, color: Colors.white),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildFloatingPill(DetectedSound sound, int index, int total) {
-    // Position pills in a circle around the center
-    final angle = (2 * math.pi * index) / total;
-    final radius = 140.0;
-    final centerX = MediaQuery.of(context).size.width / 2;
-    final centerY = 250.0;
-    
-    final x = centerX + (radius * math.cos(angle)) - 90;
-    final y = centerY + (radius * math.sin(angle)) - 30;
-    
-    return Positioned(
-      left: x,
-      top: y,
-      child: AnimatedBuilder(
-        animation: _floatAnimations[index % 5],
-        builder: (context, child) {
-          return Transform.translate(
-            offset: Offset(0, _floatAnimations[index % 5].value),
-            child: GestureDetector(
-              onTap: () => _onSoundTap(sound),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1A2632),
-                  borderRadius: BorderRadius.circular(25),
-                  border: Border.all(
-                    color: _getColorForPriority(sound.priority).withOpacity(0.3),
-                    width: 2,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: _getColorForPriority(sound.priority).withOpacity(0.2),
-                      blurRadius: 10,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: _getColorForPriority(sound.priority).withOpacity(0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        _getIconForSound(sound.name),
-                        color: _getColorForPriority(sound.priority),
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          sound.name.replaceAll('⭐ ', ''),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          _formatTime(sound.timestamp),
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.5),
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+  Widget _buildSoundDetectionArea() {
+    if (!_isListening) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.mic_none,
+              size: 80,
+              color: Colors.white.withOpacity(0.3),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Tap microphone to start',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.6),
+                fontSize: 18,
               ),
             ),
-          );
-        },
+          ],
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ✅ NEW: Live caption (partial transcription)
+          if (_partialTranscription.isNotEmpty)
+            _buildLiveCaption(),
+          
+          if (_partialTranscription.isNotEmpty)
+            const SizedBox(height: 16),
+          
+          // ✅ NEW: Transcript history
+          if (_transcriptHistory.isNotEmpty) ...[
+            Text(
+              'Recent Speech',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.6),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...List.generate(
+              math.min(5, _transcriptHistory.length),
+              (index) => _buildTranscriptBubble(_transcriptHistory[index]),
+            ),
+            const SizedBox(height: 24),
+          ],
+          
+          // Sound detection (existing)
+          if (_detectedSounds.isEmpty && _transcriptHistory.isEmpty)
+            _buildListeningIndicator()
+          else if (_detectedSounds.isNotEmpty) ...[
+            Text(
+              'Detected Sounds',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.6),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...List.generate(
+             math.min(5, _detectedSounds.length),
+              (index) {
+                final sound = _detectedSounds[index];
+                final animIndex = index % _floatAnimations.length;
+                
+                return AnimatedBuilder(
+                  animation: _floatAnimations[animIndex],
+                  builder: (context, child) {
+                    return Transform.translate(
+                      offset: Offset(0, _floatAnimations[animIndex].value),
+                      child: child,
+                    );
+                  },
+                  child: _buildSoundBubble(sound, index),
+                );
+              },
+            ),
+          ],
+        ],
       ),
     );
   }
 
-  Widget _buildQuickActions() {
+  /// ✅ NEW: Build live caption
+  Widget _buildLiveCaption() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF4A9FFF).withOpacity(0.2),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF4A9FFF).withOpacity(0.5),
+          width: 2,
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Control Center heading
           Row(
             children: [
               Container(
-                width: 40,
-                height: 2,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Colors.white.withOpacity(0.0),
-                      Colors.white.withOpacity(0.3),
-                    ],
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF4A9FFF),
+                  shape: BoxShape.circle,
+                ),
+              ).animate(onPlay: (c) => c.repeat())
+                .fadeIn(duration: 500.ms)
+                .then()
+                .fadeOut(duration: 500.ms),
+              const SizedBox(width: 8),
+              Text(
+                'LISTENING',
+                style: TextStyle(
+                  color: const Color(0xFF4A9FFF),
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          
+          // Speaker info
+          if (_hub.currentSpeaker != null && _hub.currentSpeakerConfidence > 0.4)
+            Row(
+              children: [
+                Icon(
+                  Icons.person,
+                  size: 16,
+                  color: const Color(0xFF4A9FFF),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  '${_hub.currentSpeaker} (${(_hub.currentSpeakerConfidence * 100).toStringAsFixed(0)}%)',
+                  style: const TextStyle(
+                    color: Color(0xFF4A9FFF),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
+              ],
+            ),
+          
+          if (_hub.currentSpeaker != null && _hub.currentSpeakerConfidence > 0.4)
+            const SizedBox(height: 8),
+          
+          // Live caption text
+          Text(
+            _partialTranscription,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 18,
+              fontStyle: FontStyle.italic,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 200.ms);
+  }
+
+  /// ✅ NEW: Build transcript bubble
+  Widget _buildTranscriptBubble(TranscriptionEntry entry) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A2632),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFF4A9FFF).withOpacity(0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with speaker and time
+          Row(
+            children: [
+              Icon(
+                Icons.person,
+                color: const Color(0xFF4A9FFF),
+                size: 16,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 6),
               Text(
-                'CONTROL CENTER',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.5),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1.5,
+                entry.speakerName,
+                style: const TextStyle(
+                  color: Color(0xFF4A9FFF),
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Container(
-                  height: 2,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.white.withOpacity(0.3),
-                        Colors.white.withOpacity(0.0),
-                      ],
+              if (entry.confidence > 0)
+                Text(
+                  ' (${(entry.confidence * 100).toStringAsFixed(0)}%)',
+                  style: TextStyle(
+                    color: Colors.grey.shade400,
+                    fontSize: 12,
+                  ),
+                ),
+              const Spacer(),
+              Text(
+                _formatTime(entry.timestamp),
+                style: TextStyle(
+                  color: Colors.grey.shade500,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          
+          // Transcription text
+          Text(
+            entry.text,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(duration: 300.ms).slideX(begin: -0.2, end: 0);
+  }
+
+  Widget _buildListeningIndicator() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: const Color(0xFF4A9FFF).withOpacity(0.2),
+            ),
+            child: const Center(
+              child: Icon(
+                Icons.hearing,
+                size: 50,
+                color: Color(0xFF4A9FFF),
+              ),
+            ),
+          ).animate(onPlay: (c) => c.repeat())
+            .scale(begin: const Offset(0.9, 0.9), end: const Offset(1.1, 1.1), duration: 1500.ms)
+            .then()
+            .scale(begin: const Offset(1.1, 1.1), end: const Offset(0.9, 0.9), duration: 1500.ms),
+          const SizedBox(height: 24),
+          Text(
+            'Listening for sounds and speech...',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.8),
+              fontSize: 18,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSoundBubble(DetectedSound sound, int index) {
+    final isRecent = index < 3;
+    final opacity = isRecent ? 1.0 : 0.6;
+    
+    return GestureDetector(
+      onTap: () => _onSoundTap(sound),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Color(0xFF1A2632).withOpacity(opacity),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: _getPriorityColor(sound.priority).withOpacity(0.5),
+            width: 2,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: _getPriorityColor(sound.priority).withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Text(
+                  _getSoundEmoji(sound.name),
+                  style: const TextStyle(fontSize: 24),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    sound.name,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      Text(
+                        '${(sound.confidence * 100).toStringAsFixed(0)}%',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.6),
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        _formatTime(sound.timestamp),
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.4),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                  // Show speaker if known
+                  if (_hub.currentSpeaker != null && _hub.currentSpeakerConfidence > 0.4)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.person,
+                            size: 14,
+                            color: Color(0xFF4A9FFF).withOpacity(0.7),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${_hub.currentSpeaker} (${(_hub.currentSpeakerConfidence * 100).toStringAsFixed(0)}%)',
+                            style: TextStyle(
+                              color: Color(0xFF4A9FFF).withOpacity(0.7),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            if (sound.priority == 'critical')
+              const Icon(Icons.warning, color: Colors.red, size: 24),
+          ],
+        ),
+      ).animate(delay: Duration(milliseconds: index * 50))
+        .fadeIn(duration: 300.ms)
+        .slideX(begin: -0.2, end: 0),
+    );
+  }
+
+  Color _getPriorityColor(String priority) {
+    switch (priority) {
+      case 'critical':
+        return Colors.red;
+      case 'important':
+        return Colors.orange;
+      default:
+        return const Color(0xFF4A9FFF);
+    }
+  }
+
+  String _getSoundEmoji(String soundName) {
+    final lower = soundName.toLowerCase();
+    if (lower.contains('fire') || lower.contains('alarm')) return '🔥';
+    if (lower.contains('door')) return '🚪';
+    if (lower.contains('baby')) return '👶';
+    if (lower.contains('phone')) return '📱';
+    if (lower.contains('dog')) return '🐕';
+    if (lower.contains('music')) return '🎵';
+    if (lower.contains('speech')) return '💬';
+    if (lower.contains('car')) return '🚗';
+    if (lower.contains('⭐')) return '⭐'; // Custom sounds
+    return '🔊';
+  }
+
+  String _formatTime(DateTime time) {
+    final now = DateTime.now();
+    final diff = now.difference(time);
+    
+    if (diff.inSeconds < 60) return '${diff.inSeconds}s ago';
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
+    return '${time.hour}:${time.minute.toString().padLeft(2, '0')}';
+  }
+
+  Widget _buildControlCenter() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: const BoxDecoration(
+        color: Color(0xFF0A0E14),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          // Quick actions with speaker recognition
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildQuickAction(
+                icon: Icons.graphic_eq,
+                label: 'Captions',
+                onTap: () => Navigator.pushNamed(context, '/transcription'),
+              ),
+              _buildQuickAction(
+                icon: Icons.person_search,
+                label: 'Speaker',
+                onTap: () => Navigator.pushNamed(context, '/speaker-recognition'),
+              ),
+              _buildQuickAction(
+                icon: Icons.mic_outlined,
+                label: 'Train',
+                onTap: () => Navigator.pushNamed(context, '/sound-training'),
+              ),
+              _buildQuickAction(
+                icon: Icons.record_voice_over,
+                label: 'Voices',
+                onTap: () => Navigator.pushNamed(context, '/voice-training'),
               ),
             ],
           ),
           const SizedBox(height: 16),
           
-          // Top row: Train Sounds, Voice Profiles, Sleep Mode
-          Row(
-            children: [
-              Expanded(
-                child: _buildControlCard(
-                  icon: Icons.music_note,
-                  label: 'Train\nSounds',
-                  color: const Color(0xFF9C27B0),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SoundTrainingScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildControlCard(
-                  icon: Icons.person_add,
-                  label: 'Voice\nProfiles',
-                  color: const Color(0xFFFF9800),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AzureVoiceTrainingScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildControlCard(
-                  icon: Icons.shield_moon,
-                  label: 'Sleep\nMode',
-                  color: const Color(0xFF3F51B5),
-                  onTap: () {
-                    Navigator.pushNamed(context, '/sleep_mode');
-                  },
-                ),
-              ),
-            ],
-          ),
-          
-          const SizedBox(height: 12),
-          
-          // Bottom row: Test TTS, Live Caption
-          Row(
-            children: [
-              Expanded(
-                child: _buildWideControlCard(
-                  icon: Icons.volume_up,
-                  label: 'Test TTS',
-                  color: const Color(0xFF4CAF50),
-                  onTap: _testTTS,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildWideControlCard(
-                  icon: Icons.closed_caption,
-                  label: 'Live Caption',
-                  color: const Color(0xFF00BCD4),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const EnhancedTranscriptionScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
+          // Activity summary
+          if (_isListening)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (_detectedSounds.isNotEmpty)
+                  Text(
+                    '${_detectedSounds.length} sounds',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.6),
+                      fontSize: 14,
+                    ),
+                  ),
+                if (_detectedSounds.isNotEmpty && _transcriptHistory.isNotEmpty)
+                  Text(
+                    ' • ',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.4),
+                      fontSize: 14,
+                    ),
+                  ),
+                if (_transcriptHistory.isNotEmpty)
+                  Text(
+                    '${_transcriptHistory.length} transcripts',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.6),
+                      fontSize: 14,
+                    ),
+                  ),
+              ],
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildControlCard({
+  Widget _buildQuickAction({
     required IconData icon,
     required String label,
-    required Color color,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        height: 110,
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A2632),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.05),
-            width: 1,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 32),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                height: 1.3,
-              ),
+      child: Column(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A2632),
+              shape: BoxShape.circle,
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildWideControlCard({
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 70,
-        decoration: BoxDecoration(
-          color: const Color(0xFF1A2632),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: Colors.white.withOpacity(0.05),
-            width: 1,
+            child: Icon(icon, color: const Color(0xFF4A9FFF)),
           ),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: color, size: 28),
-            const SizedBox(width: 12),
-            Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-              ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -927,71 +1249,62 @@ class _DashboardScreenState extends State<DashboardScreen>
   Widget _buildBottomNav() {
     return Container(
       height: 80,
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
       decoration: const BoxDecoration(
-        color: Color(0xFF1A2632),
+        color: Color(0xFF0A0E14),
       ),
-      child: Stack(
-        clipBehavior: Clip.none,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildNavItem(Icons.home, true, null),
-              _buildNavItem(Icons.credit_card, false, null),
-              const SizedBox(width: 80),
-              _buildNavItem(Icons.tune, false, null),
-              _buildNavItem(Icons.settings, false, () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SettingsScreen()),
-                );
-              }),
-            ],
-          ),
-          
-          Positioned(
-            top: -25,
-            left: MediaQuery.of(context).size.width / 2 - 70,
-            child: GestureDetector(
-              onTap: _toggleListening,
-              child: Container(
-                width: 140,
-                height: 64,
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFFFF4757), Color(0xFFFF6B81)],
+          _buildNavItem(Icons.home, false, null),
+          _buildNavItem(Icons.notifications_none, false, null),
+          // Main listening button
+          GestureDetector(
+            onTap: _toggleListening,
+            onLongPress: () {
+              // Long press for emergency contacts
+              Navigator.pushNamed(context, '/emergency');
+            },
+            child: Container(
+              width: 64,
+              height: 64,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: _isListening 
+                    ? [Colors.red, Colors.red.shade700]
+                    : [const Color(0xFF4A9FFF), const Color(0xFF9C27B0)],
+                ),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: (_isListening ? Colors.red : const Color(0xFF4A9FFF))
+                        .withOpacity(0.4),
+                    blurRadius: 20,
+                    spreadRadius: 2,
                   ),
-                  borderRadius: BorderRadius.circular(32),
-                  boxShadow: [
-                    BoxShadow(
-                      color: const Color(0xFFFF4757).withOpacity(0.4),
-                      blurRadius: 20,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      'SOS',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Icon(
-                      _isListening ? Icons.mic : Icons.location_on,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                  ],
-                ),
+                ],
               ),
-            ),
+              child: Icon(
+                _isListening ? Icons.stop : Icons.mic,
+                color: Colors.white,
+                size: 32,
+              ),
+            ).animate(onPlay: (c) => _isListening ? c.repeat() : null)
+              .scale(
+                begin: const Offset(1, 1),
+                end: const Offset(1.1, 1.1),
+                duration: 1000.ms,
+              )
+              .then()
+              .scale(
+                begin: const Offset(1.1, 1.1),
+                end: const Offset(1, 1),
+                duration: 1000.ms,
+              ),
           ),
+          _buildNavItem(Icons.access_time, false, null),
+          _buildNavItem(Icons.settings, false, 
+            () => Navigator.pushNamed(context, '/settings')),
         ],
       ),
     );
@@ -1001,18 +1314,130 @@ class _DashboardScreenState extends State<DashboardScreen>
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 56,
-        height: 56,
+        width: 48,
+        height: 48,
         decoration: BoxDecoration(
           color: isActive ? const Color(0xFF4A9FFF) : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(
           icon,
           color: isActive ? Colors.white : const Color(0xFF9DABB9),
-          size: 28,
+          size: 24,
         ),
       ),
     );
   }
+ Future<void> _triggerManualSOS() async {
+    final shouldSend = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A2632),
+        title: const Row(
+          children: [
+            Icon(Icons.warning, color: Colors.red, size: 32),
+            SizedBox(width: 12),
+            Text('Manual SOS', style: TextStyle(color: Colors.white)),
+          ],
+        ),
+        content: const Text(
+          'Send emergency alert to all contacts?',
+          style: TextStyle(color: Color(0xFF9DABB9)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Send SOS'),
+          ),
+        ],
+      ),
+    );
+    
+    if (shouldSend == true) {
+      _onEmergencyEvent(EmergencyEvent(
+        type: EmergencyType.manualTrigger,
+        sounds: ['Manual SOS'],
+        timestamp: DateTime.now(),
+      ));
+    }
+  }
+
+  Future<void> _triggerManualSleep() async {
+    if (_isListening) {
+      _showSnackbar('⚠️ Stop listening first');
+      return;
+    }
+    
+    final shouldActivate = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A2632),
+        title: const Row(
+          children: [
+            Icon(Icons.bedtime, color: Colors.purple, size: 32),
+            SizedBox(width: 12),
+            Text('Sleep Guardian', style: TextStyle(color: Colors.white)),
+          ],
+        ),
+        content: const Text(
+          'Activate Sleep Guardian mode?\n\nThis will monitor for critical sounds while you sleep.',
+          style: TextStyle(color: Color(0xFF9DABB9)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
+            child: const Text('Activate'),
+          ),
+        ],
+      ),
+    );
+    
+    if (shouldActivate == true) {
+      try {
+        final success = await _hub.startListening(mode: ListeningMode.sleepMode);
+        
+        if (success) {
+          setState(() => _isListening = true);
+          _showSnackbar('😴 Sleep Guardian Active');
+        } else {
+          _showError('Failed to start Sleep Guardian');
+        }
+      } catch (e) {
+        _showError('Error: $e');
+      }
+    }
+  }
+  @override
+  void dispose() {
+    _hub.dispose();
+    for (var controller in _floatControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+}
+
+/// ✅ NEW: Transcription entry data class
+class TranscriptionEntry {
+  final String text;
+  final String speakerName;
+  final double confidence;
+  final DateTime timestamp;
+
+  TranscriptionEntry({
+    required this.text,
+    required this.speakerName,
+    required this.confidence,
+    required this.timestamp,
+  });
 }

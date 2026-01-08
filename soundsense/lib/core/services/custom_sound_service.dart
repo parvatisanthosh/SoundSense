@@ -34,6 +34,13 @@ class CustomSoundService {
   /// Get all custom sounds
   List<CustomSound> get customSounds => List.unmodifiable(_customSounds);
 
+  /// Check if a custom sound with this name exists
+bool hasSound(String soundName) {
+  return _customSounds.any((sound) => 
+    sound.name.toLowerCase() == soundName.toLowerCase()
+  );
+}
+
   /// Start training a new custom sound
   /// Returns a TrainingSession to collect samples
   TrainingSession startTraining({
@@ -234,13 +241,5 @@ Future<bool> addSample(Uint8List audioData) async {
   void cancel() {
     _collectedEmbeddings.clear();
     _isComplete = true;
-  }
-
-  double _calculateEnergy(List<double> embedding) {
-    double sum = 0;
-    for (final value in embedding) {
-      sum += value * value;
-    }
-    return sum / embedding.length;
   }
 }

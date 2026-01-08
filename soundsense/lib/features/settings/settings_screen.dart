@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/services/settings_service.dart';
+import '../../core/services/sleep_scheduler_service.dart';
+import '../sos/emergency_contacts_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -10,6 +13,18 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   final SettingsService _settings = SettingsService();
+  final SleepSchedulerService _sleepScheduler = SleepSchedulerService.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeSleepScheduler();
+  }
+
+  Future<void> _initializeSleepScheduler() async {
+    await _sleepScheduler.initialize();
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +33,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // Header
             _buildHeader(),
             
             // Scrollable Content
@@ -28,6 +42,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // NEW: Sleep Guardian Section
+                    _buildSectionTitle('😴 Sleep Guardian'),
+                    const SizedBox(height: 16),
+                    _buildSleepGuardianCard(),
+                    
+                    const SizedBox(height: 32),
+                    
                     // Sound Detection Section
                     _buildSectionTitle('Sound Detection'),
                     const SizedBox(height: 16),
@@ -42,6 +63,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     
                     const SizedBox(height: 32),
                     
+                    // Emergency Section
+                    _buildSectionTitle('Emergency'),
+                    const SizedBox(height: 16),
+                    _buildEmergencyCard(),
+                    
+                    const SizedBox(height: 32),
+                    
                     // General Section
                     _buildSectionTitle('General'),
                     const SizedBox(height: 16),
@@ -53,7 +81,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             
-            // Bottom Navigation
             _buildBottomNav(),
           ],
         ),
@@ -61,12 +88,364 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // ============================================================
+  // NEW: SLEEP GUARDIAN CARD
+  // ============================================================
+
+  Widget _buildSleepGuardianCard() {
+    return StreamBuilder<SleepSchedulerStatus>(
+      stream: _sleepScheduler.statusStream,
+      initialData: SleepSchedulerStatus(
+        isEnabled: _sleepScheduler.isEnabled,
+        isInSleepWindow: _sleepScheduler.isInSleepWindow,
+        isSleepModeActive: _sleepScheduler.isSleepModeActive,
+        isManualOverride: false,
+        schedule: _sleepScheduler.schedule,
+        nextChange: _sleepScheduler.getNextScheduledChange(),
+      ),
+      builder: (context, snapshot) {
+        final status = snapshot.data!;
+        
+        return Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1A2632),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: status.isSleepModeActive 
+                ? const Color(0xFF9C27B0).withOpacity(0.3)
+                : Colors.white.withOpacity(0.05),
+              width: status.isSleepModeActive ? 2 : 1,
+            ),
+          ),
+          child: Column(
+            children: [
+              // Auto Sleep Mode Toggle
+              _buildAlertItem(
+                icon: Icons.bedtime,
+                iconColor: const Color(0xFF9C27B0),
+                iconBgColor: const Color(0xFF9C27B0).withOpacity(0.2),
+                title: 'Auto Sleep Mode',
+                subtitle: status.isEnabled 
+                  ? 'Scheduled: ${status.schedule.toString()}'
+                  : 'Disabled',
+                value: status.isEnabled,
+                onChanged: (value) async {
+                  await _sleepScheduler.toggleEnabled(value);
+                  setState(() {});
+                },
+              ),
+              
+              // Show schedule settings when enabled
+              if (status.isEnabled) ...[
+                Divider(color: Colors.white.withOpacity(0.05), height: 1),
+                
+                // Schedule Time Settings
+                _buildScheduleTimeSettings(status.schedule),
+                
+                Divider(color: Colors.white.withOpacity(0.05), height: 1),
+                
+                // Status Display
+                _buildSleepModeStatus(status),
+              ],
+              
+              // Manual Sleep Mode Button (always visible)
+              Divider(color: Colors.white.withOpacity(0.05), height: 1),
+              _buildManualSleepModeButton(status),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildScheduleTimeSettings(SleepSchedule schedule) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Schedule',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.6),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1,
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // Start Time
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Sleep Start',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () => _selectTime(
+                  context,
+                  isStartTime: true,
+                  currentHour: schedule.startHour,
+                  currentMinute: schedule.startMinute,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F1419),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFF9C27B0).withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.access_time, color: Color(0xFF9C27B0), size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        schedule.startTime,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // End Time
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Wake Up',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.8),
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              GestureDetector(
+                onTap: () => _selectTime(
+                  context,
+                  isStartTime: false,
+                  currentHour: schedule.endHour,
+                  currentMinute: schedule.endMinute,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F1419),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFF4A9FFF).withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.wb_sunny, color: Color(0xFF4A9FFF), size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        schedule.endTime,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSleepModeStatus(SleepSchedulerStatus status) {
+    final nextChange = status.nextChange;
+    final timeUntil = nextChange.difference(DateTime.now());
+    
+    String timeText;
+    if (timeUntil.inHours > 0) {
+      timeText = '${timeUntil.inHours}h ${timeUntil.inMinutes % 60}m';
+    } else {
+      timeText = '${timeUntil.inMinutes}m';
+    }
+    
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        children: [
+          Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              color: status.isSleepModeActive ? Colors.green : Colors.orange,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: (status.isSleepModeActive ? Colors.green : Colors.orange).withOpacity(0.5),
+                  blurRadius: 8,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  status.statusText,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  status.isSleepModeActive 
+                    ? 'Ends in $timeText'
+                    : 'Starts in $timeText',
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.5),
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildManualSleepModeButton(SleepSchedulerStatus status) {
+    final isManualActive = status.isSleepModeActive && status.isManualOverride;
+    
+    return GestureDetector(
+      onTap: () async {
+        if (isManualActive) {
+          await _sleepScheduler.deactivateManualSleepMode();
+        } else {
+          final success = await _sleepScheduler.activateManualSleepMode();
+          if (success && mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Sleep mode activated manually'),
+                backgroundColor: Color(0xFF9C27B0),
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
+        }
+        setState(() {});
+      },
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isManualActive 
+            ? const Color(0xFF9C27B0).withOpacity(0.1)
+            : const Color(0xFF0F1419),
+          borderRadius: const BorderRadius.only(
+            bottomLeft: Radius.circular(20),
+            bottomRight: Radius.circular(20),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isManualActive ? Icons.bedtime_off : Icons.bedtime,
+              color: isManualActive ? Colors.orange : const Color(0xFF9C27B0),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              isManualActive ? 'Deactivate Sleep Mode' : 'Activate Sleep Mode Now',
+              style: TextStyle(
+                color: isManualActive ? Colors.orange : const Color(0xFF9C27B0),
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _selectTime(
+    BuildContext context, {
+    required bool isStartTime,
+    required int currentHour,
+    required int currentMinute,
+  }) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: currentHour, minute: currentMinute),
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.dark().copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: Color(0xFF9C27B0),
+              surface: Color(0xFF1A2632),
+              background: Color(0xFF0F1419),
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      final schedule = _sleepScheduler.schedule;
+      
+      if (isStartTime) {
+        await _sleepScheduler.updateSchedule(
+          startHour: picked.hour,
+          startMinute: picked.minute,
+          endHour: schedule.endHour,
+          endMinute: schedule.endMinute,
+        );
+      } else {
+        await _sleepScheduler.updateSchedule(
+          startHour: schedule.startHour,
+          startMinute: schedule.startMinute,
+          endHour: picked.hour,
+          endMinute: picked.minute,
+        );
+      }
+      
+      setState(() {});
+    }
+  }
+
+  // ============================================================
+  // EXISTING SECTIONS (Keep as is)
+  // ============================================================
+
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Row(
         children: [
-          // App Icon
           Container(
             width: 56,
             height: 56,
@@ -88,7 +467,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           
           const SizedBox(width: 16),
           
-          // Title
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -101,30 +479,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: 2),
+                SizedBox(height: 4),
                 Text(
-                  'Dhwani Pro',
+                  'Customize your experience',
                   style: TextStyle(
                     color: Color(0xFF9DABB9),
-                    fontSize: 16,
+                    fontSize: 14,
                   ),
                 ),
               ],
-            ),
-          ),
-          
-          // Search Icon
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: const Color(0xFF1A2632),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.search,
-              color: Colors.white,
-              size: 24,
             ),
           ),
         ],
@@ -134,11 +497,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildSectionTitle(String title) {
     return Text(
-      title,
-      style: const TextStyle(
-        color: Colors.white,
-        fontSize: 20,
-        fontWeight: FontWeight.w600,
+      title.toUpperCase(),
+      style: TextStyle(
+        color: Colors.white.withOpacity(0.5),
+        fontSize: 12,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.5,
       ),
     );
   }
@@ -155,33 +519,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Sensitivity Header
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Sensitivity',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Adjust environmental pickup',
-                    style: TextStyle(
-                      color: Color(0xFF9DABB9),
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
               Container(
                 width: 48,
                 height: 48,
@@ -200,12 +540,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           
           const SizedBox(height: 24),
           
-          // Visual Sensitivity Bars
           _buildSensitivityBars(),
           
           const SizedBox(height: 24),
           
-          // Sensitivity Slider
           Column(
             children: [
               Row(
@@ -243,6 +581,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
                 child: Slider(
                   value: _settings.sensitivity,
+                  min: 0.3,
+                  max: 1.0,
+                  divisions: 7,
                   onChanged: (value) async {
                     await _settings.setSensitivity(value);
                     setState(() {});
@@ -254,7 +595,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           
           const SizedBox(height: 16),
           
-          // Active Detection Toggle
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
@@ -352,6 +692,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Divider(color: Colors.white.withOpacity(0.05), height: 1),
           
           _buildAlertItem(
+            icon: Icons.record_voice_over,
+            iconColor: const Color(0xFF1EA55B),
+            iconBgColor: const Color(0xFF1EA55B).withOpacity(0.2),
+            title: 'Voice Alerts (TTS)',
+            subtitle: 'Speak detected sounds',
+            value: _settings.ttsEnabled,
+            onChanged: (value) async {
+              await _settings.setTTSEnabled(value);
+              setState(() {});
+            },
+          ),
+          
+          Divider(color: Colors.white.withOpacity(0.05), height: 1),
+          
+          _buildAlertItem(
             icon: Icons.flash_on,
             iconColor: const Color(0xFF9C27B0),
             iconBgColor: const Color(0xFF9C27B0).withOpacity(0.2),
@@ -363,73 +718,85 @@ class _SettingsScreenState extends State<SettingsScreen> {
               setState(() {});
             },
           ),
-          
-          Divider(color: Colors.white.withOpacity(0.05), height: 1),
-          
-          _buildAlertItem(
-            icon: Icons.notifications,
-            iconColor: const Color(0xFF4A9FFF),
-            iconBgColor: const Color(0xFF4A9FFF).withOpacity(0.2),
-            title: 'Push Notifications',
-            subtitle: 'For high priority sounds',
-            value: _settings.normalAlerts,
-            onChanged: (value) async {
-              await _settings.setNormalAlerts(value);
-              setState(() {});
-            },
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildAlertItem({
-    required IconData icon,
-    required Color iconColor,
-    required Color iconBgColor,
-    required String title,
-    required String subtitle,
-    required bool value,
-    required Function(bool) onChanged,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      child: Row(
+  Widget _buildEmergencyCard() {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1A2632),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.05),
+          width: 1,
+        ),
+      ),
+      child: Column(
         children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: iconBgColor,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: iconColor, size: 24),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const EmergencyContactsScreen()),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0F1419),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF4757).withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.contacts,
+                      color: Color(0xFFFF4757),
+                      size: 24,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: const TextStyle(
+                  const SizedBox(width: 16),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Emergency Contacts',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Manage SOS contacts',
+                          style: TextStyle(
+                            color: Color(0xFF9DABB9),
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.arrow_forward_ios,
                     color: Color(0xFF9DABB9),
-                    fontSize: 14,
+                    size: 16,
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-          _buildModernToggle(value, onChanged),
         ],
       ),
     );
@@ -448,105 +815,134 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       child: Column(
         children: [
-          _buildGeneralItem(
-            icon: Icons.volume_up,
-            iconColor: const Color(0xFF4CAF50),
-            iconBgColor: const Color(0xFF4CAF50).withOpacity(0.2),
-            title: 'Text-to-Speech',
-            subtitle: 'Audio announcements',
-            value: _settings.ttsEnabled,
-            onChanged: (value) async {
-              await _settings.setTTSEnabled(value);
-              setState(() {});
+          _buildAlertItem(
+            icon: Icons.dark_mode,
+            iconColor: const Color(0xFF4A9FFF),
+            iconBgColor: const Color(0xFF4A9FFF).withOpacity(0.2),
+            title: 'Dark Mode',
+            subtitle: 'Always on',
+            value: true,
+            onChanged: null,
+          ),
+          
+          Divider(color: Colors.white.withOpacity(0.05), height: 1),
+          
+          GestureDetector(
+            onTap: () {
+              _showResetDialog();
             },
-          ),
-          
-          Divider(color: Colors.white.withOpacity(0.05), height: 1),
-          
-          _buildGeneralItem(
-            icon: Icons.info_outline,
-            iconColor: const Color(0xFF2196F3),
-            iconBgColor: const Color(0xFF2196F3).withOpacity(0.2),
-            title: 'App Version',
-            subtitle: '2.4.0',
-            isToggle: false,
-          ),
-          
-          Divider(color: Colors.white.withOpacity(0.05), height: 1),
-          
-          _buildGeneralItem(
-            icon: Icons.refresh,
-            iconColor: const Color(0xFFFF5252),
-            iconBgColor: const Color(0xFFFF5252).withOpacity(0.2),
-            title: 'Reset Settings',
-            subtitle: 'Restore defaults',
-            isToggle: false,
-            onTap: _resetSettings,
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: const BoxDecoration(
+                color: Color(0xFF0F1419),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF4757).withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.refresh,
+                      color: Color(0xFFFF4757),
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  const Expanded(
+                    child: Text(
+                      'Reset Settings',
+                      style: TextStyle(
+                        color: Color(0xFFFF4757),
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildGeneralItem({
+  Widget _buildAlertItem({
     required IconData icon,
     required Color iconColor,
     required Color iconBgColor,
     required String title,
     required String subtitle,
-    bool value = false,
-    Function(bool)? onChanged,
-    bool isToggle = true,
-    VoidCallback? onTap,
+    required bool value,
+    required void Function(bool)? onChanged,
   }) {
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: iconBgColor,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: iconColor, size: 24),
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0F1419),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: iconBgColor,
+              shape: BoxShape.circle,
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      color: Color(0xFF9DABB9),
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
+            child: Icon(
+              icon,
+              color: iconColor,
+              size: 24,
             ),
-            if (isToggle && onChanged != null)
-              _buildModernToggle(value, onChanged),
-          ],
-        ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: Color(0xFF9DABB9),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (onChanged != null)
+            _buildModernToggle(value, onChanged)
+          else
+            Icon(
+              Icons.check_circle,
+              color: iconColor,
+              size: 24,
+            ),
+        ],
       ),
     );
   }
 
-  Widget _buildModernToggle(bool value, Function(bool) onChanged) {
+  Widget _buildModernToggle(bool value, void Function(bool) onChanged) {
     return GestureDetector(
       onTap: () => onChanged(!value),
       child: AnimatedContainer(
@@ -564,8 +960,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             width: 28,
             height: 28,
             margin: const EdgeInsets.symmetric(horizontal: 2),
-            decoration: BoxDecoration(
-              color: value ? const Color(0xFF0F1419) : Colors.white,
+            decoration: const BoxDecoration(
+              color: Colors.white,
               shape: BoxShape.circle,
             ),
           ),
@@ -577,82 +973,73 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildBottomNav() {
     return Container(
       height: 80,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A2632),
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        border: Border(
-          top: BorderSide(
-            color: Colors.white.withOpacity(0.05),
-            width: 1,
-          ),
-        ),
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+      decoration: const BoxDecoration(
+        color: Color(0xFF0A0E14),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildNavItem(Icons.grid_view_rounded, false),
-          _buildNavItem(Icons.history, false),
-          _buildNavItem(Icons.settings, true),
-          _buildNavItem(Icons.folder_outlined, false),
-          _buildNavItem(Icons.person_outline, false),
+          _buildNavItem(Icons.home, false, () => Navigator.pushReplacementNamed(context, '/')),
+          _buildNavItem(Icons.notifications_none, false, null),
+          _buildNavItem(Icons.mic, false, null),
+          _buildNavItem(Icons.access_time, false, null),
+          _buildNavItem(Icons.settings, true, null),
         ],
       ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, bool isActive) {
-    return Container(
-      width: 56,
-      height: 56,
-      decoration: BoxDecoration(
-        color: isActive ? const Color(0xFF4A9FFF) : Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Icon(
-        icon,
-        color: isActive ? Colors.white : const Color(0xFF9DABB9),
-        size: 28,
+  Widget _buildNavItem(IconData icon, bool isActive, VoidCallback? onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xFF4A9FFF) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(
+          icon,
+          color: isActive ? Colors.white : const Color(0xFF9DABB9),
+          size: 24,
+        ),
       ),
     );
   }
 
-  void _resetSettings() async {
-    final confirm = await showDialog<bool>(
+  void _showResetDialog() {
+    showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1A2632),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Reset Settings?', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Reset Settings',
+          style: TextStyle(color: Colors.white),
+        ),
         content: const Text(
-          'This will restore all settings to default values.',
+          'This will reset all settings to default values. Continue?',
           style: TextStyle(color: Color(0xFF9DABB9)),
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel', style: TextStyle(color: Color(0xFF9DABB9))),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Reset', style: TextStyle(color: Color(0xFFFF5252))),
+            onPressed: () async {
+              await _settings.resetToDefaults();
+              Navigator.pop(context);
+              setState(() {});
+            },
+            child: const Text(
+              'Reset',
+              style: TextStyle(color: Color(0xFFFF4757)),
+            ),
           ),
         ],
       ),
     );
-
-    if (confirm == true) {
-      await _settings.resetToDefaults();
-      setState(() {});
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Settings reset to defaults'),
-            backgroundColor: Color(0xFF1EA55B),
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
-    }
   }
 }

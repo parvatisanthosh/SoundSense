@@ -1,0 +1,161 @@
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:path_provider/path_provider.dart';
+
+class PyannoteApiService {
+  static const String baseUrl = 'https://parvathygss-dhwani-speaker-recognition.hf.space';
+  
+  // Singleton
+  static PyannoteApiService? _instance;
+  static PyannoteApiService get instance {
+    _instance ??= PyannoteApiService._();
+    return _instance!;
+  }
+  PyannoteApiService._();
+
+  /// Check if server is healthy
+  Future<bool> checkHealth() async {
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/health'));
+      return response.statusCode == 200;
+    } catch (e) {
+      print('❌ Health check failed: $e');
+      return false;
+    }
+  }
+
+  /// Enroll a speaker with audio data
+  Future<Map<String, dynamic>?> enrollSpeaker(
+    String name,
+    Uint8List audioData,
+  ) async {
+    try {
+      // Save audio to temporary WAV file
+      final tempFile = await _saveAudioToTempFile(audioData);
+      
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/enroll?name=${Uri.encodeComponent(name)}'),
+      );
+      
+      request.files.add(
+        await http.MultipartFile.fromPath('file', tempFile.path),
+      );
+      
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
+      
+      // Clean up temp file
+      await tempFile.delete();
+      
+      if (response.statusCode == 200) {
+        return json.decode(responseBody);
+      } else {
+        print('❌ Enrollment failed: ${response.statusCode} - $responseBody');
+        return null;
+      }
+    } catch (e) {
+      print('❌ Enrollment error: $e');
+      return null;
+    }
+  }
+
+  /// Recognize speaker from audio data
+  Future<Map<String, dynamic>?> recognizeSpeaker(Uint8List audioData) async {
+    try {
+      // Save audio to temporary WAV file
+      final tempFile = await _saveAudioToTempFile(audioData);
+      
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('$baseUrl/recognize'),
+      );
+      
+      request.files.add(
+        await http.MultipartFile.fromPath('file', tempFile.path),
+      );
+      
+      final response = await request.send();
+      final responseBody = await response.stream.bytesToString();
+      
+      // Clean up temp file
+      await tempFile.delete();
+      
+      if (response.statusCode == 200) {
+        return json.decode(responseBody);
+      } else {
+        print('❌ Recognition failed: ${response.statusCode} - $responseBody');
+        return null;
+      }
+    } catch (e) {
+      print('❌ Recognition error: $e');
+      return null;
+    }
+  }
+
+  /// Save audio bytes to temporary WAV file
+  Future<File> _saveAudioToTempFile(Uint8List audioData) async {
+    final tempDir = await getTemporaryDirectory();
+    final tempFile = File('${tempDir.path}/temp_audio_${DateTime.now().millisecondsSinceEpoch}.wav');
+    
+    // Write WAV header + audio data
+    final wavData = _createWavFile(audioData);
+    await tempFile.writeAsBytes(wavData);
+    
+    return tempFile;
+  }
+
+  /// Create proper WAV file with header
+  Uint8List _createWavFile(Uint8List audioData) {
+    final int sampleRate = 16000;
+    final int numChannels = 1;
+    final int bitsPerSample = 16;
+    
+    final int byteRate = sampleRate * numChannels * bitsPerSample ~/ 8;
+    final int blockAlign = numChannels * bitsPerSample ~/ 8;
+    final int dataSize = audioData.length;
+    final int fileSize = 36 + dataSize;
+    
+    final header = BytesBuilder();
+    
+    // RIFF header
+    header.add('RIFF'.codeUnits);
+    header.add(_int32ToBytes(fileSize));
+    header.add('WAVE'.codeUnits);
+    
+    // fmt chunk
+    header.add('fmt '.codeUnits);
+    header.add(_int32ToBytes(16)); // fmt chunk size
+    header.add(_int16ToBytes(1)); // PCM format
+    header.add(_int16ToBytes(numChannels));
+    header.add(_int32ToBytes(sampleRate));
+    header.add(_int32ToBytes(byteRate));
+    header.add(_int16ToBytes(blockAlign));
+    header.add(_int16ToBytes(bitsPerSample));
+    
+    // data chunk
+    header.add('data'.codeUnits);
+    header.add(_int32ToBytes(dataSize));
+    header.add(audioData);
+    
+    return header.toBytes();
+  }
+
+  Uint8List _int16ToBytes(int value) {
+    return Uint8List.fromList([
+      value & 0xFF,
+      (value >> 8) & 0xFF,
+    ]);
+  }
+
+  Uint8List _int32ToBytes(int value) {
+    return Uint8List.fromList([
+      value & 0xFF,
+      (value >> 8) & 0xFF,
+      (value >> 16) & 0xFF,
+      (value >> 24) & 0xFF,
+    ]);
+  }
+}
