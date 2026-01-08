@@ -582,15 +582,29 @@ Future<void> _processAudioData(List<double> audioData) async {
 
   /// Check emergency trigger
 Future<void> _checkEmergencyTrigger(SmartSoundEvent event) async {
-  // ✅ NEW: If in sleep mode, ALSO trigger sleep alert (flash/vibration)
+  // ✅ Sleep mode: Only trigger for ACTUAL emergency sounds
   if (_currentMode == ListeningMode.sleepMode && event.priority == 'critical') {
-    debugPrint('😴 Sleep mode: Critical sound detected - ${event.soundName}');
+    // ✅ Filter out false positives - only real emergency sounds
+    final soundName = event.soundName.toLowerCase();
+    final isRealEmergency = soundName.contains('alarm') ||
+                           soundName.contains('fire') ||
+                           soundName.contains('smoke') ||
+                           soundName.contains('baby') ||
+                           soundName.contains('cry') ||
+                           soundName.contains('glass') ||
+                           soundName.contains('break') ||
+                           soundName.contains('siren') ||
+                           soundName.contains('emergency');
     
-    if (_sleepMode != null) {
-      await _sleepMode!.triggerCriticalSoundAlert(event.soundName);
+    if (isRealEmergency) {
+      debugPrint('😴 Sleep mode: REAL critical sound detected - ${event.soundName}');
+      
+      if (_sleepMode != null) {
+        await _sleepMode!.triggerCriticalSoundAlert(event.soundName);
+      }
+    } else {
+      debugPrint('😴 Sleep mode: Ignoring non-emergency sound - ${event.soundName}');
     }
-    
-    // ✅ DON'T RETURN - Continue to SOS check below!
   }
   
   // ✅ Continue with normal SOS logic (works in both normal AND sleep mode)
@@ -604,7 +618,7 @@ Future<void> _checkEmergencyTrigger(SmartSoundEvent event) async {
   
   debugPrint('🔍 SOS Check: Found ${recentCritical.length} recent critical sounds');
   
-  if (recentCritical.length < 1) {  // ← Changed from 2 to 1
+  if (recentCritical.length < 1) {
     debugPrint('⚠️ SOS: Need critical sound, only have ${recentCritical.length}');
     return;
   }

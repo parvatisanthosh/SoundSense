@@ -53,44 +53,69 @@ class SleepModeService {
   }
   
   /// Called by hub when a critical sound is detected during sleep mode
-  Future<void> triggerCriticalSoundAlert(String soundName) async {
-    if (!_isMonitoring) return;
+/// Called by hub when a critical sound is detected during sleep mode
+Future<void> triggerCriticalSoundAlert(String soundName) async {
+  if (!_isMonitoring) return;
+  
+  print("😴 Sleep Mode: Critical sound detected - $soundName");
+  
+  // Load settings
+  SleepModeSettings settings = await SleepModeSettings.load();
+  
+  // Check if this sound should trigger an alert
+  bool shouldTrigger = _isCriticalSound(soundName, settings);
+  
+  if (shouldTrigger) {
+    print("😴 Sleep Mode: TRIGGERING ALERT for $soundName");
     
-    print("😴 Sleep Mode: Critical sound detected - $soundName");
+    await _alertHandler.triggerAlert(
+      flash: settings.flashEnabled,
+      vibration: settings.vibrationEnabled,
+      smartLights: settings.smartLightsEnabled,
+      smartwatch: settings.smartwatchEnabled,
+    );
     
-    // Load settings
-    SleepModeSettings settings = await SleepModeSettings.load();
-    
-    // Check if this sound is in user's critical sounds list
-    if (_isCriticalSound(soundName, settings)) {
-      print("😴 Sleep Mode: TRIGGERING ALERT for $soundName");
-      
-      await _alertHandler.triggerAlert(
-        flash: settings.flashEnabled,
-        vibration: settings.vibrationEnabled,
-        smartLights: settings.smartLightsEnabled,
-        smartwatch: settings.smartwatchEnabled,
-      );
-      
-      // Auto-stop alert after 10 seconds
-      Future.delayed(const Duration(seconds: 10), () {
-        _alertHandler.stopAlert();
-      });
-    }
+    // Auto-stop alert after 10 seconds
+    Future.delayed(const Duration(seconds: 10), () {
+      _alertHandler.stopAlert();
+    });
+  } else {
+    print("😴 Sleep Mode: '$soundName' not in critical list, skipping alert");
   }
+}
 
-  bool _isCriticalSound(String detectedLabel, SleepModeSettings settings) {
-    final label = detectedLabel.toLowerCase();
-    
-    for (final key in settings.criticalSounds) {
-      if (key == 'baby_cry' && (label.contains('baby') || label.contains('cry') || label.contains('infant'))) return true;
-      if (key == 'fire_alarm' && (label.contains('alarm') || label.contains('fire'))) return true;
-      if (key == 'break_in' && (label.contains('glass') || label.contains('break'))) return true;
-      if (key == 'smoke_detector' && (label.contains('smoke') || label.contains('detector') || label.contains('beep'))) return true;
-    }
+bool _isCriticalSound(String detectedLabel, SleepModeSettings settings) {
+  final label = detectedLabel.toLowerCase();
+  
+  // If no critical sounds selected, don't trigger anything
+  if (settings.criticalSounds.isEmpty) {
+    print("😴 No critical sounds configured");
     return false;
   }
-
+  
+  // Check user's selected critical sounds
+  for (final key in settings.criticalSounds) {
+    if (key == 'baby_cry' && (label.contains('baby') || label.contains('cry') || label.contains('infant') || label.contains('crying'))) {
+      print("😴 Matched: baby_cry");
+      return true;
+    }
+    if (key == 'fire_alarm' && (label.contains('alarm') || label.contains('fire') || label.contains('siren') || label.contains('bell'))) {
+      print("😴 Matched: fire_alarm");
+      return true;
+    }
+    if (key == 'break_in' && (label.contains('glass') || label.contains('break') || label.contains('shatter') || label.contains('crash'))) {
+      print("😴 Matched: break_in");
+      return true;
+    }
+    if (key == 'smoke_detector' && (label.contains('smoke') || label.contains('detector') || label.contains('beep') || label.contains('alarm'))) {
+      print("😴 Matched: smoke_detector");
+      return true;
+    }
+  }
+  
+  print("😴 No match found for: $label");
+  return false;
+}
   Future<void> stopMonitoring() async {
     _isMonitoring = false;
     await WakelockPlus.disable();
