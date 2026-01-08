@@ -70,7 +70,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get chatAiAssistant => 'AI सहायक';
 
   @override
-  String get chatStatusOnline => 'ऑनलाइन • जेमिनी AI';
+  String get chatStatusOnline => 'ऑनलाइन • एज़्योर एआई';
 
   @override
   String get chatRecent => 'हाल ही में:';
@@ -84,6 +84,9 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get notificationsTitle => 'सूचनाएं';
+
+  @override
+  String get notificationsSubtitle => 'ध्वनि पहचान में सुधार करें';
 
   @override
   String get notificationsEmpty => 'अभी कोई सूचना नहीं है';

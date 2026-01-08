@@ -21,12 +21,13 @@
     
     "chatWelcome": "Hi! 👋 I'm your SoundSense assistant powered by AI. I can help you understand sounds, answer questions about your environment, or just chat. How can I help you today?",
     "chatAiAssistant": "AI Assistant",
-    "chatStatusOnline": "Online • Gemini AI",
+    "chatStatusOnline": "Online • Azure AI",
     "chatRecent": "Recent:",
     "chatInputHint": "Ask me anything...",
     "chatCleared": "Chat cleared! 🧹 I'm ready to help you with anything. What would you like to know?",
     
     "notificationsTitle": "Notifications",
+    "notificationsSubtitle": "Improve sound detection",
     "notificationsEmpty": "No notifications yet",
     "notificationTimeJustNow": "Just now",
     "notificationsSpeaker": "Speaker:",

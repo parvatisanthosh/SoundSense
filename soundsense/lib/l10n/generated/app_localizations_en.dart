@@ -71,7 +71,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chatAiAssistant => 'AI Assistant';
 
   @override
-  String get chatStatusOnline => 'Online • Gemini AI';
+  String get chatStatusOnline => 'Online • Azure AI';
 
   @override
   String get chatRecent => 'Recent:';
@@ -85,6 +85,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get notificationsTitle => 'Notifications';
+
+  @override
+  String get notificationsSubtitle => 'Improve sound detection';
 
   @override
   String get notificationsEmpty => 'No notifications yet';

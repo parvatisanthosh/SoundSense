@@ -23,7 +23,7 @@ class SettingsService {
   // Current settings values (cached)
   bool criticalAlerts = true;
   bool importantAlerts = true;
-  bool normalAlerts = false;
+  bool normalAlerts = true; // ✅ Default to true
   bool vibrationEnabled = true;
   String vibrationIntensity = 'Medium';
   double sensitivity = 0.5;
@@ -62,7 +62,7 @@ Future<void> setTTSEnabled(bool value) async {
   Future<void> _loadSettings() async {
     criticalAlerts = _prefs?.getBool(_criticalAlertsKey) ?? true;
     importantAlerts = _prefs?.getBool(_importantAlertsKey) ?? true;
-    normalAlerts = _prefs?.getBool(_normalAlertsKey) ?? false;
+    normalAlerts = _prefs?.getBool(_normalAlertsKey) ?? true; // ✅ Default to true
     vibrationEnabled = _prefs?.getBool(_vibrationEnabledKey) ?? true;
     vibrationIntensity = _prefs?.getString(_vibrationIntensityKey) ?? 'Medium';
     sensitivity = _prefs?.getDouble(_sensitivityKey) ?? 0.5;
@@ -128,7 +128,7 @@ Future<void> setTTSEnabled(bool value) async {
   Future<void> resetToDefaults() async {
     await setCriticalAlerts(true);
     await setImportantAlerts(true);
-    await setNormalAlerts(false);
+    await setNormalAlerts(true); // ✅ Default to true
     await setVibrationEnabled(true);
     await setVibrationIntensity('Medium');
     await setSensitivity(0.5);

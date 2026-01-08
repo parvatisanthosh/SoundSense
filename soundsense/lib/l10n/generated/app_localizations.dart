@@ -221,7 +221,7 @@ abstract class AppLocalizations {
   /// No description provided for @chatStatusOnline.
   ///
   /// In en, this message translates to:
-  /// **'Online • Gemini AI'**
+  /// **'Online • Azure AI'**
   String get chatStatusOnline;
 
   /// No description provided for @chatRecent.
@@ -247,6 +247,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Notifications'**
   String get notificationsTitle;
+
+  /// No description provided for @notificationsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Improve sound detection'**
+  String get notificationsSubtitle;
 
   /// No description provided for @notificationsEmpty.
   ///
