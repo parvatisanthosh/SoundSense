@@ -7,7 +7,14 @@ class NotificationsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final recentSounds = SoundIntelligenceHub().recentSounds;
+    final hub = SoundIntelligenceHub();
+    
+    // ✅ Filter: Only show sounds that need training prompts
+    final trainingPrompts = hub.recentSounds
+        .where((event) => 
+            event.shouldPromptTraining && 
+            event.source == SoundSource.yamnet)
+        .toList();
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -16,13 +23,16 @@ class NotificationsScreen extends StatelessWidget {
           children: [
             _buildHeader(context),
             Expanded(
-              child: recentSounds.isEmpty
+              child: trainingPrompts.isEmpty
                   ? _buildEmptyState(context)
                   : ListView.builder(
                       padding: const EdgeInsets.all(20),
-                      itemCount: recentSounds.length,
+                      itemCount: trainingPrompts.length,
                       itemBuilder: (context, index) {
-                        return _buildNotificationItem(context, recentSounds[index]);
+                        return _buildTrainingPromptCard(
+                          context, 
+                          trainingPrompts[index],
+                        );
                       },
                     ),
             ),
@@ -46,17 +56,34 @@ class NotificationsScreen extends StatelessWidget {
               shape: BoxShape.circle,
             ),
             child: IconButton(
-              icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
+              icon: Icon(
+                Icons.arrow_back, 
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
               onPressed: () => Navigator.pop(context),
             ),
           ),
           const SizedBox(width: 16),
-          Text(
-            'Notifications',
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Training Suggestions',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  'Improve sound detection',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -70,13 +97,22 @@ class NotificationsScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.notifications_off_outlined,
+            Icons.check_circle_outline,
             size: 64,
-            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+            color: Colors.green.withOpacity(0.5),
           ),
           const SizedBox(height: 16),
           Text(
-            'No notifications yet',
+            'All sounds trained!',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'No training suggestions at the moment',
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
               fontSize: 16,
@@ -87,91 +123,228 @@ class NotificationsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildNotificationItem(BuildContext context, SmartSoundEvent event) {
-    // Determine color based on priority
-    Color priorityColor;
-    if (event.priority == 'critical') {
-      priorityColor = Colors.red;
-    } else if (event.priority == 'important') {
-      priorityColor = Colors.orange;
-    } else {
-      priorityColor = const Color(0xFF4A9FFF);
-    }
-
+  Widget _buildTrainingPromptCard(BuildContext context, SmartSoundEvent event) {
+    final hub = SoundIntelligenceHub();
+    
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Colors.white.withOpacity(0.05),
+          color: const Color(0xFF4A9FFF).withOpacity(0.3),
+          width: 2,
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: priorityColor.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              event.priority == 'critical' ? Icons.warning_amber_rounded : Icons.notifications_none_rounded,
-              color: priorityColor,
-              size: 24,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Header with sound info
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF4A9FFF).withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.lightbulb_outline,
+                  color: const Color(0xFF4A9FFF),
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       event.displayName,
                       style: TextStyle(
                         color: Theme.of(context).colorScheme.onSurface,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
                     Text(
-                      _formatTime(event.timestamp),
+                      '${(event.confidence * 100).toInt()}% confidence',
                       style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
-                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        fontSize: 14,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                if (event.transcription != null)
-                  Text(
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Training prompt message
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF4A9FFF).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: const Color(0xFF4A9FFF),
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Would you like to train this sound?',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Training helps improve detection accuracy for sounds you care about.',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Additional info if available
+          if (event.transcription != null) ...[
+            Row(
+              children: [
+                Icon(
+                  Icons.transcribe,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
                     '"${event.transcription}"',
                     style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                       fontSize: 14,
                       fontStyle: FontStyle.italic,
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
-                if (event.speakerName != null)
-                   Padding(
-                     padding: const EdgeInsets.only(top: 4.0),
-                     child: Text(
-                      'Speaker: ${event.speakerName} ${(event.speakerConfidence * 100).toInt()}%',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
-                        fontSize: 12,
-                      ),
-                                       ),
-                   ),
+                ),
               ],
             ),
+            const SizedBox(height: 12),
+          ],
+          
+          if (event.speakerName != null) ...[
+            Row(
+              children: [
+                Icon(
+                  Icons.person,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Speaker: ${event.speakerName} (${(event.speakerConfidence * 100).toInt()}%)',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
+          
+          // Time
+          Text(
+            'Detected ${_formatTime(event.timestamp)}',
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+              fontSize: 12,
+            ),
+          ),
+          
+          const SizedBox(height: 20),
+          
+          // Action buttons
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    // Accept training
+                    hub.acceptTrainingPrompt(event.soundName);
+                    Navigator.pushNamed(context, '/sound-training');
+                  },
+                  icon: const Icon(Icons.mic, size: 20),
+                  label: const Text('Yes, Train'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF4A9FFF),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: () {
+                    // Reject training
+                    hub.rejectTrainingPrompt(event.soundName);
+                    
+                    // Refresh the screen
+                    Navigator.pushReplacementNamed(context, '/notifications');
+                    
+                    // Show feedback
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          hub.shouldShowTrainingPrompt(event.soundName)
+                            ? 'Maybe later'
+                            : 'Won\'t ask again for "${event.soundName}"',
+                        ),
+                        behavior: SnackBarBehavior.floating,
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.onSurface,
+                    side: BorderSide(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('No Thanks'),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -181,26 +354,27 @@ class NotificationsScreen extends StatelessWidget {
   String _formatTime(DateTime timestamp) {
     final now = DateTime.now();
     final diff = now.difference(timestamp);
-    if (diff.inMinutes < 1) return 'Just now';
+    
+    if (diff.inMinutes < 1) return 'just now';
     if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
     if (diff.inHours < 24) return '${diff.inHours}h ago';
     return '${timestamp.day}/${timestamp.month}';
   }
 
-    Widget _buildBottomNav(BuildContext context) {
+  Widget _buildBottomNav(BuildContext context) {
     return SoundSenseBottomNavBar(
-      currentIndex: 2, // Notifications is now index 2
+      currentIndex: 2, // Notifications
       isListening: SoundIntelligenceHub().isListening,
       onMicTap: () {
-         Navigator.popUntil(context, ModalRoute.withName('/'));
+        Navigator.popUntil(context, ModalRoute.withName('/'));
       },
       onTap: (index) {
         if (index == 0) { // Home
-           Navigator.popUntil(context, ModalRoute.withName('/'));
+          Navigator.popUntil(context, ModalRoute.withName('/'));
         } else if (index == 1) { // Chat
-           Navigator.pushNamed(context, '/chat');
+          Navigator.pushNamed(context, '/chat');
         } else if (index == 3) { // Settings
-           Navigator.pushNamed(context, '/settings');
+          Navigator.pushNamed(context, '/settings');
         }
       },
     );

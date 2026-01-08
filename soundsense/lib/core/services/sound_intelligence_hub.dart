@@ -70,6 +70,8 @@ class SoundIntelligenceHub {
   // Sound history
   final List<SmartSoundEvent> _soundHistory = [];
   static const int _maxHistorySize = 100;
+  final Map<String, int> _trainingPromptRejections = {}; // Track "No" responses
+static const int _maxTrainingPromptRejections = 3;
 
   // User preferences
   final Map<String, UserSoundPreference> _learnedPreferences = {};
@@ -99,6 +101,7 @@ class SoundIntelligenceHub {
   String get partialTranscription => _partialTranscription;
 
   /// Initialize the hub
+  /// 
   Future<void> initialize() async {
     if (_isInitialized) {
       debugPrint('🧠 Hub already initialized');
@@ -208,6 +211,7 @@ class SoundIntelligenceHub {
       
       debugPrint('🗣️ Transcription (partial): "$text"');
     });
+    
 
     // Listen for final transcriptions
     _speechService.transcriptionStream.listen((text) {
@@ -234,6 +238,8 @@ class SoundIntelligenceHub {
     
     debugPrint('🔍 Speech callbacks setup complete');
   }
+
+  
 
   /// Start listening
   Future<bool> startListening({ListeningMode mode = ListeningMode.normal}) async {
@@ -282,6 +288,56 @@ if (_isListening) {
       return false;
     }
   }
+  bool _shouldOfferTraining(String soundName) {
+  final pref = _learnedPreferences[soundName];
+
+  // Never dismissed before → ask
+  if (pref == null) return true;
+
+  // User said NO 3 times → stop forever
+  return pref.dismissCount < 3;
+}
+bool shouldShowTrainingPrompt(String soundName) {
+  // Don't prompt for custom sounds (already trained)
+  if (_customSounds.hasSound(soundName)) {
+    return false;
+  }
+  
+  // Don't prompt if user said "No" 3+ times
+  final rejections = _trainingPromptRejections[soundName] ?? 0;
+  if (rejections >= _maxTrainingPromptRejections) {
+    return false;
+  }
+  
+  return true;
+}
+
+// Add this method to handle "No" response
+void rejectTrainingPrompt(String soundName) {
+  _trainingPromptRejections[soundName] = (_trainingPromptRejections[soundName] ?? 0) + 1;
+  
+  final count = _trainingPromptRejections[soundName]!;
+  debugPrint('❌ User rejected training for "$soundName" ($count/$_maxTrainingPromptRejections)');
+  
+  if (count >= _maxTrainingPromptRejections) {
+    debugPrint('🔕 Will not prompt training for "$soundName" anymore');
+  }
+  
+  _saveTrainingPreferences();
+}
+
+// Add this method to reset if user trains the sound
+void acceptTrainingPrompt(String soundName) {
+  _trainingPromptRejections.remove(soundName);
+  debugPrint('✅ User accepted training for "$soundName"');
+  _saveTrainingPreferences();
+}
+
+// Save preferences (add this near _saveLearnedPreferences)
+Future<void> _saveTrainingPreferences() async {
+  // TODO: Implement persistent storage if needed
+  // For now, rejections are reset when app restarts
+}
 
   /// Stop listening
   Future<void> stopListening() async {
@@ -517,30 +573,35 @@ Future<void> _processAudioData(List<double> audioData) async {
   }
 
   /// Handle YAMNet detection
-  Future<void> _handleYAMNetDetection(SoundResult result) async {
-    final priority = SoundCategory.getPriority(result.label);
+// Find _handleYAMNetDetection (around line 350) and replace with:
+Future<void> _handleYAMNetDetection(SoundResult result) async {
+  final priority = SoundCategory.getPriority(result.label);
 
-    if (!_settings.shouldShowSound(priority)) return;
-    if (_shouldSkipBasedOnLearning(result.label)) {
-      debugPrint('🤫 Skipping ${result.label} - user previously dismissed');
-      return;
-    }
-
-    final event = SmartSoundEvent(
-      soundName: result.label,
-      displayName: result.label,
-      confidence: result.confidence,
-      priority: priority,
-      source: SoundSource.yamnet,
-      timestamp: DateTime.now(),
-      context: _getCurrentContext(),
-      speakerName: _currentSpeakerName,
-      speakerConfidence: _currentSpeakerConfidence,
-      transcription: _currentTranscription.isNotEmpty ? _currentTranscription : null,
-    );
-
-    await _executeSmartActions(event);
+  if (!_settings.shouldShowSound(priority)) return;
+  if (_shouldSkipBasedOnLearning(result.label)) {
+    debugPrint('🤫 Skipping ${result.label} - user previously dismissed');
+    return;
   }
+
+  // ✅ NEW: Check if we should show training prompt
+  final shouldPrompt = shouldShowTrainingPrompt(result.label);
+
+  final event = SmartSoundEvent(
+    soundName: result.label,
+    displayName: result.label,
+    confidence: result.confidence,
+    priority: priority,
+    source: SoundSource.yamnet,
+    timestamp: DateTime.now(),
+    context: _getCurrentContext(),
+    speakerName: _currentSpeakerName,
+    speakerConfidence: _currentSpeakerConfidence,
+    transcription: _currentTranscription.isNotEmpty ? _currentTranscription : null,
+    shouldPromptTraining: shouldPrompt, // ✅ NEW
+  );
+
+  await _executeSmartActions(event);
+}
 
   /// Execute smart actions
   Future<void> _executeSmartActions(SmartSoundEvent event) async {
@@ -669,14 +730,26 @@ Future<void> _checkEmergencyTrigger(SmartSoundEvent event) async {
             s.confidence < 0.7)
         .length;
 
-    if (similarRecent >= 3 && !_customSounds.hasSound(event.soundName)) {
-      _suggestionController.add(SmartSuggestion(
-        type: SuggestionType.trainCustomSound,
-        message: 'Train "${event.soundName}" for better accuracy?',
-        soundName: event.soundName,
-        reason: 'Detected $similarRecent times with low confidence',
-      ));
-    }
+if (similarRecent >= 3 &&
+    !_customSounds.hasSound(event.soundName) &&
+    _shouldOfferTraining(event.soundName)) {
+
+  final trainingEvent = SmartSoundEvent(
+    soundName: event.soundName,
+    displayName: 'Would you like to train this sound?',
+    confidence: event.confidence,
+    priority: 'low',
+    source: SoundSource.trainingSuggestion,
+    timestamp: DateTime.now(),
+    context: event.context,
+  );
+
+  _addToHistory(trainingEvent);
+
+  debugPrint('🧠 Training suggestion shown for ${event.soundName}');
+}
+
+
   }
 
   /// Get current context
@@ -748,9 +821,24 @@ Future<void> _checkEmergencyTrigger(SmartSoundEvent event) async {
 
  void _addToHistory(SmartSoundEvent event) {
   // Check if we just added the same sound within last 3 seconds
-  final isDuplicate = _soundHistory.isNotEmpty &&
-      _soundHistory.first.soundName == event.soundName &&
-      DateTime.now().difference(_soundHistory.first.timestamp).inSeconds < 3;
+  final alreadySuggested = _soundHistory.any((s) =>
+    s.soundName == event.soundName &&
+    s.displayName.startsWith('Improve detection') &&
+    DateTime.now().difference(s.timestamp).inMinutes < 10);
+
+if (alreadySuggested) {
+  debugPrint('🧠 Training suggestion already shown recently, skipping');
+  return;
+}
+
+  final isTrainingSuggestion =
+    event.source == SoundSource.trainingSuggestion;
+
+final isDuplicate = !isTrainingSuggestion &&
+    _soundHistory.isNotEmpty &&
+    _soundHistory.first.soundName == event.soundName &&
+    DateTime.now().difference(_soundHistory.first.timestamp).inSeconds < 3;
+
   
   if (isDuplicate) {
     debugPrint('🔄 Skipping duplicate sound: ${event.soundName}');
@@ -845,7 +933,9 @@ class SmartSoundEvent {
   final DetectionContext context;
   final String? speakerName;
   final double speakerConfidence;
+  final bool shouldPromptTraining;
   final String? transcription;
+  
 
   SmartSoundEvent({
     required this.soundName,
@@ -858,6 +948,7 @@ class SmartSoundEvent {
     this.speakerName,
     this.speakerConfidence = 0.0,
     this.transcription,
+    this.shouldPromptTraining = false, 
   });
 
   DetectedSound toDetectedSound() {
@@ -914,6 +1005,7 @@ enum SoundSource {
   yamnet,
   customTrained,
   sleepGuardian,
+  trainingSuggestion,
 }
 
 /// Detection context

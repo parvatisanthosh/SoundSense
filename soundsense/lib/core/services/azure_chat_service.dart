@@ -114,7 +114,7 @@ class AzureChatService {
 
   /// Build system prompt with context
   String _buildSystemPrompt() {
-    String prompt = '''You are a helpful AI assistant for SoundSense, an app designed to help deaf and hard-of-hearing users understand their sound environment.
+    String prompt = '''You are a helpful AI assistant for Dhwani, an app designed to help deaf and hard-of-hearing users understand their sound environment.
 
 Your role is to:
 - Help users understand sounds they've detected

@@ -251,19 +251,21 @@ class _DashboardScreenState extends State<DashboardScreen>
   /// 
   /// Hub suggests improvements (e.g., "Train this sound?")
   void _onSmartSuggestion(SmartSuggestion suggestion) {
-    print('💡 Dashboard received suggestion: ${suggestion.message}');
-    
-    setState(() {
-      _currentSuggestion = suggestion;
-    });
-    
-    // Show suggestion for 8 seconds
-    Future.delayed(const Duration(seconds: 8), () {
-      if (mounted) {
-        setState(() => _currentSuggestion = null);
-      }
-    });
+  // ❌ Ignore training suggestions on dashboard
+  if (suggestion.type == SuggestionType.trainCustomSound) {
+    return;
   }
+
+  setState(() {
+    _currentSuggestion = suggestion;
+  });
+
+  Future.delayed(const Duration(seconds: 8), () {
+    if (mounted) {
+      setState(() => _currentSuggestion = null);
+    }
+  });
+}
 
   /// Handle speaker event from hub
   /// 
