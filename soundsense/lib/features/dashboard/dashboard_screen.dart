@@ -403,12 +403,12 @@ class _DashboardScreenState extends State<DashboardScreen>
                 Expanded(
                   child: _buildFeedbackButton(
                     icon: Icons.check_circle,
-                    label: 'Correct',
+                    label: AppLocalizations.of(context)!.feedbackCorrect,
                     color: Colors.green,
                     onTap: () {
                       _hub.confirmSound(sound.name, correct: true);
                       Navigator.pop(context);
-                      _showSnackbar('✓ Thanks! I\'ll remember this');
+                      _showSnackbar(AppLocalizations.of(context)!.feedbackThanks);
                     },
                   ),
                 ),
@@ -416,12 +416,12 @@ class _DashboardScreenState extends State<DashboardScreen>
                 Expanded(
                   child: _buildFeedbackButton(
                     icon: Icons.cancel,
-                    label: 'Wrong',
+                    label: AppLocalizations.of(context)!.feedbackWrong,
                     color: Colors.red,
                     onTap: () {
                       _hub.confirmSound(sound.name, correct: false);
                       Navigator.pop(context);
-                      _showSnackbar('✓ Noted! I\'ll improve');
+                      _showSnackbar(AppLocalizations.of(context)!.feedbackNoted);
                     },
                   ),
                 ),
@@ -430,7 +430,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             const SizedBox(height: 12),
             _buildFeedbackButton(
               icon: Icons.close,
-              label: 'Dismiss (Don\'t show again)',
+              label: AppLocalizations.of(context)!.feedbackDismiss,
               color: Colors.orange,
               onTap: () {
                 _hub.dismissSound(sound.name);
@@ -441,7 +441,7 @@ class _DashboardScreenState extends State<DashboardScreen>
             const SizedBox(height: 12),
             _buildFeedbackButton(
               icon: Icons.mic,
-              label: 'Train This Sound',
+              label: AppLocalizations.of(context)!.feedbackTrain,
               color: const Color(0xFF4A9FFF),
               onTap: () {
                 Navigator.pop(context);
@@ -546,7 +546,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 const Icon(Icons.check_circle, color: Colors.green, size: 64),
                 const SizedBox(height: 16),
                 Text(
-                  '✓ SOS Sent!',
+                  AppLocalizations.of(context)!.sosSentSuccess,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 28,
@@ -555,7 +555,7 @@ class _DashboardScreenState extends State<DashboardScreen>
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '$_sosContactsNotified contacts notified',
+                  '$_sosContactsNotified ${AppLocalizations.of(context)!.sosNotified}',
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
                     fontSize: 18,
@@ -1153,22 +1153,22 @@ IconButton(
             children: [
               _buildQuickAction(
                 icon: Icons.graphic_eq,
-                label: 'Captions',
+                label: AppLocalizations.of(context)!.quickActionCaptions,
                 onTap: () => Navigator.pushNamed(context, '/transcription'),
               ),
               _buildQuickAction(
                 icon: Icons.person_search,
-                label: 'Speaker',
+                label: AppLocalizations.of(context)!.quickActionSpeaker,
                 onTap: () => Navigator.pushNamed(context, '/speaker-recognition'),
               ),
               _buildQuickAction(
                 icon: Icons.mic_outlined,
-                label: 'Train',
+                label: AppLocalizations.of(context)!.quickActionTrain,
                 onTap: () => Navigator.pushNamed(context, '/sound-training'),
               ),
               _buildQuickAction(
                 icon: Icons.record_voice_over,
-                label: 'Voices',
+                label: AppLocalizations.of(context)!.quickActionVoices,
                 onTap: () => Navigator.pushNamed(context, '/voice-training'),
               ),
             ],
@@ -1179,11 +1179,11 @@ IconButton(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (_detectedSounds.isNotEmpty)
-                  Text('${_detectedSounds.length} sounds', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 14)),
+                  Text(AppLocalizations.of(context)!.dashboardStatusSounds(_detectedSounds.length), style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 14)),
                 if (_detectedSounds.isNotEmpty && _transcriptHistory.isNotEmpty)
                   Text(' • ', style: TextStyle(color: Colors.white.withOpacity(0.4), fontSize: 14)),
                 if (_transcriptHistory.isNotEmpty)
-                  Text('${_transcriptHistory.length} transcripts', style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 14)),
+                  Text(AppLocalizations.of(context)!.dashboardStatusTranscripts(_transcriptHistory.length), style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 14)),
               ],
             ),
         ],
@@ -1229,22 +1229,22 @@ IconButton(
           children: [
             const Icon(Icons.warning, color: Colors.red, size: 32),
             const SizedBox(width: 12),
-            Text('Manual SOS', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+            Text(AppLocalizations.of(context)!.dashboardManualSosTitle, style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
           ],
         ),
         content: Text(
-          'Send emergency alert to all contacts?',
+          AppLocalizations.of(context)!.dashboardManualSosContent,
           style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.settingsCancelAction),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Send SOS'),
+            child: Text(AppLocalizations.of(context)!.dashboardManualSosAction),
           ),
         ],
       ),
@@ -1261,7 +1261,7 @@ IconButton(
 
   Future<void> _triggerManualSleep() async {
     if (_isListening) {
-      _showSnackbar('⚠️ Stop listening first');
+      _showSnackbar(AppLocalizations.of(context)!.dashboardStopListeningFirst);
       return;
     }
     
@@ -1273,22 +1273,22 @@ IconButton(
           children: [
             const Icon(Icons.bedtime, color: Colors.purple, size: 32),
             const SizedBox(width: 12),
-            Text('Sleep Guardian', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+            Text(AppLocalizations.of(context)!.dashboardSleepGuardianTitle, style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
           ],
         ),
         content: Text(
-          'Activate Sleep Guardian mode?\n\nThis will monitor for critical sounds while you sleep.',
+          AppLocalizations.of(context)!.dashboardSleepGuardianContent,
           style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context)!.settingsCancelAction),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
-            child: const Text('Activate'),
+            child: Text(AppLocalizations.of(context)!.dashboardSleepGuardianAction),
           ),
         ],
       ),

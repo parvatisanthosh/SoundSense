@@ -220,6 +220,137 @@ class AppLocalizationsHi extends AppLocalizations {
   String get sosRemoveAction => 'हटाएं';
 
   @override
+  String get settingsSubtitle => 'अपने अनुभव को कस्टमाइज़ करें';
+
+  @override
+  String get settingsSectionSleep => 'स्लीप गार्डियन';
+
+  @override
+  String get settingsSectionSound => 'ध्वनि पहचान';
+
+  @override
+  String get settingsSectionAlerts => 'अलर्ट और हैप्टिक्स';
+
+  @override
+  String get settingsSectionEmergency => 'आपातकालीन';
+
+  @override
+  String get settingsSectionGeneral => 'सामान्य';
+
+  @override
+  String get settingsAutoSleep => 'ऑटो स्लीप मोड';
+
+  @override
+  String get settingsAutoSleepDisabled => 'अक्षम';
+
+  @override
+  String settingsAutoSleepScheduled(Object schedule) {
+    return 'निर्धारित: $schedule';
+  }
+
+  @override
+  String get settingsActivateSleep => 'अब स्लीप मोड सक्रिय करें';
+
+  @override
+  String get settingsDeactivateSleep => 'स्लीप मोड को निष्क्रिय करें';
+
+  @override
+  String get settingsSleepModeActivated =>
+      'स्लीप मोड मैन्युअल रूप से सक्रिय किया गया';
+
+  @override
+  String get settingsSchedule => 'अनुसूची';
+
+  @override
+  String get settingsSleepStart => 'सोने का समय';
+
+  @override
+  String get settingsWakeUp => 'जागने का समय';
+
+  @override
+  String get settingsActiveDetection => 'सक्रिय पहचान';
+
+  @override
+  String get settingsSensitivityLow => 'कम';
+
+  @override
+  String get settingsSensitivityHigh => 'उच्च';
+
+  @override
+  String get settingsHaptic => 'हैप्टिक फीडबैक';
+
+  @override
+  String get settingsHapticDesc => 'पहचान पर कंपन';
+
+  @override
+  String get settingsVoice => 'वॉयस अलर्ट (TTS)';
+
+  @override
+  String get settingsVoiceDesc => 'पहचानी गई आवाज़ें बोलें';
+
+  @override
+  String get settingsFlash => 'विजुअल फ्लैश';
+
+  @override
+  String get settingsFlashDesc => 'स्क्रीन फ्लैश अलर्ट';
+
+  @override
+  String get settingsEmergencyContacts => 'आपातकालीन संपर्क';
+
+  @override
+  String get settingsEmergencyContactsDesc => 'SOS संपर्कों को प्रबंधित करें';
+
+  @override
+  String get settingsOn => 'लागू';
+
+  @override
+  String get settingsOff => 'बंद';
+
+  @override
+  String get settingsReset => 'सेटिंग्स रीसेट करें';
+
+  @override
+  String get settingsResetDesc => 'डिफ़ॉल्ट सेटिंग्स पुनर्स्थापित करें';
+
+  @override
+  String get settingsResetConfirm =>
+      'क्या आप सभी सेटिंग्स को डिफ़ॉल्ट पर रीसेट करना चाहते हैं?';
+
+  @override
+  String get settingsResetAction => 'रीसेट';
+
+  @override
+  String get settingsCancelAction => 'रद्द करें';
+
+  @override
+  String get settingsSelectLanguage => 'भाषा चुनें';
+
+  @override
+  String get settingsLanguageHindi => 'हिंदी';
+
+  @override
+  String get settingsLanguageEnglish => 'अंग्रेज़ी';
+
+  @override
+  String get settingsModeSystem => 'सिस्टम डिफ़ॉल्ट';
+
+  @override
+  String get settingsModeLight => 'लाइट मोड';
+
+  @override
+  String get settingsModeDark => 'डार्क मोड';
+
+  @override
+  String settingsSleepStartsIn(Object time) {
+    return '$time में शुरू होगा';
+  }
+
+  @override
+  String settingsSleepEndsIn(Object time) {
+    return '$time में समाप्त होगा';
+  }
+
+  @override
   String get sosCountSeconds => 'SOS भेजे जाने तक सेकंड';
 
   @override
@@ -246,6 +377,29 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get sosCallEmergency => 'आपातकालीन सेवाओं को कॉल करें (112)';
+
+  @override
+  String get dashboardManualSosTitle => 'मैनुअल SOS';
+
+  @override
+  String get dashboardManualSosContent =>
+      'सभी संपर्कों को आपातकालीन अलर्ट भेजें?';
+
+  @override
+  String get dashboardManualSosAction => 'SOS भेजें';
+
+  @override
+  String get dashboardSleepGuardianTitle => 'स्लीप गार्डियन';
+
+  @override
+  String get dashboardSleepGuardianContent =>
+      'स्लीप गार्डियन मोड सक्रिय करें?\n\nयह आपके सोते समय महत्वपूर्ण आवाज़ों की निगरानी करेगा।';
+
+  @override
+  String get dashboardSleepGuardianAction => 'सक्रिय करें';
+
+  @override
+  String get dashboardStopListeningFirst => '⚠️ पहले सुनना बंद करें';
 
   @override
   String get spkTitle => 'वक्ता की पहचान';
@@ -293,4 +447,140 @@ class AppLocalizationsHi extends AppLocalizations {
 
   @override
   String get spkInstruction3 => '3. ऐप 3 सेकंड के लिए रिकॉर्ड करेगा';
+
+  @override
+  String get feedbackCorrect => 'सही';
+
+  @override
+  String get feedbackWrong => 'गलत';
+
+  @override
+  String get feedbackDismiss => 'खारिज करें (फिर न दिखाएं)';
+
+  @override
+  String get feedbackTrain => 'इस ध्वनि को सिखाएं';
+
+  @override
+  String get feedbackThanks => '✓ धन्यवाद! मैं इसे याद रखूंगा';
+
+  @override
+  String get feedbackNoted => '✓ नोट किया गया! मैं सुधार करूंगा';
+
+  @override
+  String get sosSentSuccess => '✓ SOS भेजा गया!';
+
+  @override
+  String dashboardStatusSounds(Object count) {
+    return '$count आवाज़ें';
+  }
+
+  @override
+  String dashboardStatusTranscripts(Object count) {
+    return '$count लिप्यंतरण';
+  }
+
+  @override
+  String get voiceProfileTitle => 'आवाज़ प्रोफाइल';
+
+  @override
+  String get voiceProfileNameLabel => 'व्यक्ति का नाम';
+
+  @override
+  String get voiceProfileNameHint => 'उदा. माँ, पिताजी, राहुल';
+
+  @override
+  String get voiceProfileRelationshipLabel => 'रिश्ता';
+
+  @override
+  String get voiceProfileCreateButton => 'वॉयस प्रोफाइल बनाएं';
+
+  @override
+  String get voiceProfileSavedTitle => 'सहेजे गए प्रोफाइल';
+
+  @override
+  String get voiceProfileAddAnother => 'एक और व्यक्ति जोड़ें';
+
+  @override
+  String get voiceProfileTraining => 'प्रशिक्षण';
+
+  @override
+  String get voiceProfileProgress => 'प्रगति';
+
+  @override
+  String get voiceProfileEnrolled => 'नामांकित';
+
+  @override
+  String get voiceProfileReady => 'तैयार';
+
+  @override
+  String get voiceProfilePending => 'लंबित';
+
+  @override
+  String voiceProfileInstructions(Object name, Object seconds) {
+    return '$name से शांत वातावरण में $seconds सेकंड के लिए स्वाभाविक रूप से बोलने को कहें।';
+  }
+
+  @override
+  String get voiceProfileSuccess =>
+      'वॉयस प्रोफाइल सहेजा गया! अब इस व्यक्ति को लाइव कैप्शन के दौरान पहचाना जा सकता है।';
+
+  @override
+  String get transcriptionTitle => 'ध्वनि लाइव';
+
+  @override
+  String get transcriptionReady => 'सुनने के लिए तैयार';
+
+  @override
+  String get transcriptionListening => 'अब सुन रहा है';
+
+  @override
+  String get transcriptionPrompt => 'शुरू करने के लिए माइक्रोफोन टैप करें';
+
+  @override
+  String get transcriptionRecent => 'हाल के कैप्शन';
+
+  @override
+  String get transcriptionClear => 'साफ़ करें';
+
+  @override
+  String get transcriptionEmpty => 'अभी तक कोई कैप्शन नहीं';
+
+  @override
+  String get transcriptionMute => 'म्यूट';
+
+  @override
+  String get transcriptionSize => 'आकार';
+
+  @override
+  String get transcriptionSave => 'सहेजें';
+
+  @override
+  String get relMom => 'माँ';
+
+  @override
+  String get relDad => 'पिताजी';
+
+  @override
+  String get relSister => 'बहन';
+
+  @override
+  String get relBrother => 'भाई';
+
+  @override
+  String get relSpouse => 'जीवनसाथी';
+
+  @override
+  String get relChild => 'बच्चा';
+
+  @override
+  String get relFriend => 'मित्र';
+
+  @override
+  String get relColleague => 'सहकर्मी';
+
+  @override
+  String get relDoctor => 'डॉक्टर';
+
+  @override
+  String get relOther => 'अन्य';
 }
