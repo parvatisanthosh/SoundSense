@@ -16,17 +16,42 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
   final _audioRecorder = AudioRecorder();
   final _nameController = TextEditingController();
   
-  final int _requiredSamples = 3;
+  // ✅ INCREASED: More samples = better accuracy!
+  final int _requiredSamples = 6; // Increased from 4 to 6
   int _samplesCollected = 0;
   bool _isRecording = false;
   bool _isEnrolling = false;
   String? _speakerName;
+  int _recordingProgress = 0;
   
-  List<String> _trainingPhrases = [
-    "Hello, this is me speaking",
+  // ✅ MORE VARIED PHRASES for better voice coverage
+  final List<String> _trainingPhrases = [
+    "Hello, my name is [NAME] and this is my voice",
     "The quick brown fox jumps over the lazy dog",
-    "I am recording my voice for speaker recognition",
+    "I am training the system to recognize my unique voice",
+    "Please remember my voice for future recognition",
+    "One two three four five, testing my microphone",
+    "This is sample number six for voice enrollment",
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _checkServerHealth();
+  }
+
+  Future<void> _checkServerHealth() async {
+    final healthy = await _apiService.checkHealth();
+    if (!healthy && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('⚠️ Server offline. Please check connection.'),
+          backgroundColor: Colors.orange,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    }
+  }
 
   Future<void> _startEnrollment() async {
     final name = _nameController.text.trim();
@@ -53,14 +78,15 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
       return;
     }
 
-    setState(() => _isRecording = true);
+    setState(() {
+      _isRecording = true;
+      _recordingProgress = 0;
+    });
 
     try {
-      // Get temporary directory
       final tempDir = await getTemporaryDirectory();
       final recordingPath = '${tempDir.path}/enrollment_${DateTime.now().millisecondsSinceEpoch}.wav';
       
-      // Start recording
       await _audioRecorder.start(
         const RecordConfig(
           encoder: AudioEncoder.wav,
@@ -71,32 +97,75 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
         path: recordingPath,
       );
       
-      // Record for 4 seconds
-      await Future.delayed(const Duration(seconds: 4));
+      // ✅ LONGER RECORDING: 10 seconds instead of 8
+      for (int i = 1; i <= 10; i++) {
+        await Future.delayed(const Duration(seconds: 1));
+        if (mounted) {
+          setState(() => _recordingProgress = i);
+        }
+      }
       
-      // Stop recording
       final path = await _audioRecorder.stop();
-      setState(() => _isRecording = false);
+      setState(() {
+        _isRecording = false;
+        _recordingProgress = 0;
+      });
       
       if (path != null) {
         await _enrollSample(path);
       }
     } catch (e) {
-      setState(() => _isRecording = false);
+      setState(() {
+        _isRecording = false;
+        _recordingProgress = 0;
+      });
       _showError('Recording error: $e');
     }
   }
 
   Future<void> _enrollSample(String audioPath) async {
+    // Show processing indicator
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+              ),
+              SizedBox(width: 12),
+              Text('Processing audio...'),
+            ],
+          ),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+
     try {
-      // Read audio file
       final file = File(audioPath);
       final audioBytes = await file.readAsBytes();
       
-      // Enroll with API
-      final result = await _apiService.enrollSpeaker(_speakerName!, audioBytes);
+      // ✅ STRICTER VALIDATION
+      print('🎙️ Enrollment sample ${_samplesCollected + 1}: ${audioBytes.length} bytes');
       
-      // Clean up temp file
+      if (audioBytes.length < 200000) { // Increased minimum size
+        await file.delete();
+        _showError('Recording too short (${audioBytes.length} bytes). Please speak continuously for 10 seconds.');
+        return;
+      }
+      
+      // ✅ CHECK AUDIO ENERGY to ensure it's not just silence
+      final audioQuality = _checkAudioQuality(audioBytes);
+      if (!audioQuality.isGood) {
+        await file.delete();
+        _showError('Audio quality issue: ${audioQuality.reason}. Please try again.');
+        return;
+      }
+      
+      final result = await _apiService.enrollSpeaker(_speakerName!, audioBytes);
       await file.delete();
       
       if (result != null && result['success'] == true) {
@@ -105,34 +174,152 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
         });
         
         if (_samplesCollected >= _requiredSamples) {
-          _showSuccess('✓ $_speakerName enrolled successfully!');
-          Future.delayed(const Duration(seconds: 2), () {
-            if (mounted) Navigator.pop(context);
+          _showSuccess('✓ $_speakerName enrolled with $_requiredSamples samples!');
+          
+          // Show completion dialog
+          Future.delayed(const Duration(seconds: 1), () {
+            if (mounted) {
+              _showCompletionDialog();
+            }
           });
+        } else {
+          _showSuccess('✓ Sample ${_samplesCollected}/$_requiredSamples recorded');
         }
       } else {
-        _showError('Failed to enroll sample');
+        _showError('Failed to enroll sample. Server error. Please try again.');
       }
     } catch (e) {
+      print('❌ Enrollment error: $e');
       _showError('Enrollment error: $e');
     }
   }
 
+  // ✅ NEW: Check audio quality before sending
+  AudioQualityCheck _checkAudioQuality(List<int> audioBytes) {
+    // Skip WAV header (44 bytes)
+    final pcmData = audioBytes.sublist(44);
+    
+    // Calculate RMS energy
+    double sumSquares = 0;
+    int sampleCount = 0;
+    
+    for (int i = 0; i < pcmData.length - 1; i += 2) {
+      int sample = pcmData[i] | (pcmData[i + 1] << 8);
+      if (sample > 32767) sample -= 65536;
+      
+      double normalized = sample / 32768.0;
+      sumSquares += normalized * normalized;
+      sampleCount++;
+    }
+    
+    double rms = sampleCount > 0 ? sumSquares / sampleCount : 0;
+    
+    print('📊 Audio RMS energy: ${rms.toStringAsExponential(2)}');
+    
+    // Check if audio is too quiet (likely silence or very low volume)
+    if (rms < 0.0001) {
+      return AudioQualityCheck(false, 'Audio too quiet. Please speak louder.');
+    }
+    
+    // Check if audio is clipping (too loud)
+    if (rms > 0.5) {
+      return AudioQualityCheck(false, 'Audio too loud. Move mic further away.');
+    }
+    
+    return AudioQualityCheck(true, 'Good');
+  }
+
+  void _showCompletionDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).cardTheme.color,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.green, size: 32),
+            const SizedBox(width: 12),
+            Text(
+              'Enrollment Complete!',
+              style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '$_speakerName has been successfully enrolled with $_requiredSamples voice samples.',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF4A9FFF).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '💡 Tips for Best Recognition:',
+                    style: TextStyle(
+                      color: const Color(0xFF4A9FFF),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '• Use same device & environment\n'
+                    '• Speak at similar volume\n'
+                    '• Avoid background noise\n'
+                    '• Start with 45% threshold',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context); // Close dialog
+              Navigator.pop(context); // Close enrollment screen
+            },
+            child: const Text(
+              'Done',
+              style: TextStyle(
+                color: Color(0xFF4A9FFF),
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.red, duration: const Duration(seconds: 4)),
     );
   }
 
   void _showSuccess(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.green,
-      ),
+      SnackBar(content: Text(message), backgroundColor: Colors.green, duration: const Duration(seconds: 2)),
     );
   }
 
@@ -142,24 +329,25 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Theme.of(context).cardTheme.color,
-        title: Text('Add Family Member', style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
+        title: Text(
+          'Add Family Member',
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
+        ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: _isEnrolling ? _buildEnrollmentView() : _buildNameInputView(),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: _isEnrolling ? _buildEnrollmentView() : _buildNameInputView(),
+        ),
       ),
     );
   }
 
   Widget _buildNameInputView() {
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(
-          Icons.person_add,
-          size: 80,
-          color: Color(0xFF4A9FFF),
-        ),
+        const SizedBox(height: 40),
+        const Icon(Icons.person_add, size: 80, color: Color(0xFF4A9FFF)),
         const SizedBox(height: 32),
         Text(
           'Add Family Member',
@@ -171,7 +359,7 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
         ),
         const SizedBox(height: 16),
         Text(
-          'Enter the name of the person you want to add',
+          'High-accuracy voice enrollment',
           style: TextStyle(
             fontSize: 16,
             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
@@ -180,7 +368,6 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
         ),
         const SizedBox(height: 48),
         
-        // Name input
         TextField(
           controller: _nameController,
           style: TextStyle(color: Theme.of(context).colorScheme.onSurface, fontSize: 18),
@@ -201,7 +388,6 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
         ),
         const SizedBox(height: 32),
         
-        // Start button
         SizedBox(
           width: double.infinity,
           child: ElevatedButton(
@@ -209,14 +395,54 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF4A9FFF),
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             ),
             child: const Text(
               'Start Training',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
             ),
+          ),
+        ),
+        
+        const SizedBox(height: 24),
+        
+        // ✅ UPDATED INFO
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardTheme.color,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.info_outline, color: const Color(0xFF4A9FFF), size: 20),
+                  const SizedBox(width: 8),
+                  Text(
+                    'High-Accuracy Training',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                '• 6 voice samples (10 seconds each)\n'
+                '• Speak clearly and naturally\n'
+                '• Read the provided phrases\n'
+                '• Quiet environment recommended\n'
+                '• Better enrollment = better recognition!',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                  fontSize: 14,
+                  height: 1.6,
+                ),
+              ),
+            ],
           ),
         ),
       ],
@@ -225,11 +451,13 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
 
   Widget _buildEnrollmentView() {
     final progress = _samplesCollected / _requiredSamples;
+    final currentPhrase = _trainingPhrases[_samplesCollected % _trainingPhrases.length]
+        .replaceAll('[NAME]', _speakerName ?? '');
     
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Progress indicator
+        const SizedBox(height: 20),
+        
         Text(
           'Training: $_speakerName',
           style: TextStyle(
@@ -240,7 +468,6 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
         ),
         const SizedBox(height: 32),
         
-        // Progress circle
         Stack(
           alignment: Alignment.center,
           children: [
@@ -251,7 +478,7 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
                 value: progress,
                 strokeWidth: 8,
                 backgroundColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.1),
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4A9FFF)),
+                valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF4A9FFF)),
               ),
             ),
             Column(
@@ -276,58 +503,49 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
           ],
         ),
         
-        const SizedBox(height: 48),
+        const SizedBox(height: 40),
         
-        // Recording status
         if (_isRecording)
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.red.withOpacity(0.2),
+              color: Colors.red.withOpacity(0.1),
               borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  width: 12,
-                  height: 12,
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'Recording...',
-                  style: TextStyle(
-                    color: Colors.red,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          )
-        else
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardTheme.color,
-              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.red.withOpacity(0.3), width: 2),
             ),
             child: Column(
               children: [
-                Text(
-                  'Please read:',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                    fontSize: 14,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 12,
+                      height: 12,
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      'Recording... $_recordingProgress/10s',
+                      style: const TextStyle(
+                        color: Colors.red,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 16),
+                LinearProgressIndicator(
+                  value: _recordingProgress / 10,
+                  backgroundColor: Colors.grey.shade300,
+                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.red),
+                ),
+                const SizedBox(height: 16),
                 Text(
-                  _trainingPhrases[_samplesCollected % _trainingPhrases.length],
+                  currentPhrase,
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.onSurface,
                     fontSize: 16,
@@ -337,23 +555,64 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
                 ),
               ],
             ),
+          )
+        else
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardTheme.color,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: const Color(0xFF4A9FFF).withOpacity(0.3),
+                width: 2,
+              ),
+            ),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.mic, color: const Color(0xFF4A9FFF), size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Read aloud (10 seconds):',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  currentPhrase,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
           ),
         
-        const SizedBox(height: 48),
+        const SizedBox(height: 32),
         
-        // Record button
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
             onPressed: _isRecording ? null : _recordSample,
-            icon: Icon(_isRecording ? Icons.stop : Icons.mic),
-            label: Text(_isRecording ? 'Recording (4s)...' : 'Record Sample'),
+            icon: Icon(_isRecording ? Icons.stop : Icons.mic, color: Colors.white),
+            label: Text(
+              _isRecording ? 'Recording...' : 'Record Sample $_samplesCollected/$_requiredSamples',
+              style: const TextStyle(color: Colors.white),
+            ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: _isRecording ? Colors.red : const Color(0xFF4A9FFF),
+              backgroundColor: _isRecording ? Colors.grey : const Color(0xFF4A9FFF),
               padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ),
@@ -361,7 +620,6 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
         
         const SizedBox(height: 16),
         
-        // Cancel button
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: Text(
@@ -369,6 +627,8 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
             style: TextStyle(color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5)),
           ),
         ),
+        
+        const SizedBox(height: 20),
       ],
     );
   }
@@ -379,4 +639,10 @@ class _SpeakerEnrollmentScreenState extends State<SpeakerEnrollmentScreen> {
     _nameController.dispose();
     super.dispose();
   }
+}
+
+class AudioQualityCheck {
+  final bool isGood;
+  final String reason;
+  AudioQualityCheck(this.isGood, this.reason);
 }

@@ -819,151 +819,244 @@ IconButton(
   }
 
   /// ✅ NEW: Build live caption
-  Widget _buildLiveCaption() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF4A9FFF).withOpacity(0.2),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFF4A9FFF).withOpacity(0.5),
-          width: 2,
-        ),
+/// ✅ UPDATED: Build live caption with speaker identification
+Widget _buildLiveCaption() {
+  return Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: const Color(0xFF4A9FFF).withOpacity(0.2),
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: const Color(0xFF4A9FFF).withOpacity(0.5),
+        width: 2,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 8,
-                height: 8,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF4A9FFF),
-                  shape: BoxShape.circle,
-                ),
-              ).animate(onPlay: (c) => c.repeat())
-                .fadeIn(duration: 500.ms)
-                .then()
-                .fadeOut(duration: 500.ms),
-              const SizedBox(width: 8),
-              Text(
-                'LISTENING',
-                style: TextStyle(
-                  color: const Color(0xFF4A9FFF),
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 1.2,
-                ),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header with listening indicator
+        Row(
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: Color(0xFF4A9FFF),
+                shape: BoxShape.circle,
               ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          
-          // Speaker info
-          if (_hub.currentSpeaker != null && _hub.currentSpeakerConfidence > 0.4)
-            Row(
+            ).animate(onPlay: (c) => c.repeat())
+              .fadeIn(duration: 500.ms)
+              .then()
+              .fadeOut(duration: 500.ms),
+            const SizedBox(width: 8),
+            Text(
+              'LIVE CAPTION',
+              style: TextStyle(
+                color: const Color(0xFF4A9FFF),
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ],
+        ),
+        
+        const SizedBox(height: 12),
+        
+        // ✅ NEW: Speaker identification - shown ABOVE the text
+        if (_hub.currentSpeaker != null && _hub.currentSpeakerConfidence > 0.4)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF4A9FFF).withOpacity(0.3),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
+                const Icon(
                   Icons.person,
-                  size: 16,
-                  color: const Color(0xFF4A9FFF),
+                  size: 18,
+                  color: Color(0xFF4A9FFF),
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  '${_hub.currentSpeaker} (${(_hub.currentSpeakerConfidence * 100).toStringAsFixed(0)}%)',
+                  '${_hub.currentSpeaker}',
                   style: const TextStyle(
                     color: Color(0xFF4A9FFF),
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${(_hub.currentSpeakerConfidence * 100).toStringAsFixed(0)}%',
+                    style: const TextStyle(
+                      color: Color(0xFF4A9FFF),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
             ),
-          
-          if (_hub.currentSpeaker != null && _hub.currentSpeakerConfidence > 0.4)
-            const SizedBox(height: 8),
-          
-          // Live caption text
-          Text(
-            _partialTranscription,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface,
-              fontSize: 18,
-              fontStyle: FontStyle.italic,
-              height: 1.4,
+          )
+        else
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.grey.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(20),
             ),
-          ),
-        ],
-      ),
-    ).animate().fadeIn(duration: 200.ms);
-  }
-
-  /// ✅ NEW: Build transcript bubble
-  Widget _buildTranscriptBubble(TranscriptionEntry entry) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardTheme.color,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFF4A9FFF).withOpacity(0.3),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header with speaker and time
-          Row(
-            children: [
-              Icon(
-                Icons.person,
-                color: const Color(0xFF4A9FFF),
-                size: 16,
-              ),
-              const SizedBox(width: 6),
-              Text(
-                entry.speakerName,
-                style: const TextStyle(
-                  color: Color(0xFF4A9FFF),
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.person_outline,
+                  size: 18,
+                  color: Colors.grey.shade500,
                 ),
-              ),
-              if (entry.confidence > 0)
+                const SizedBox(width: 6),
                 Text(
-                  ' (${(entry.confidence * 100).toStringAsFixed(0)}%)',
+                  'Unknown Speaker',
                   style: TextStyle(
-                    color: Colors.grey.shade400,
-                    fontSize: 12,
+                    color: Colors.grey.shade500,
+                    fontSize: 14,
+                    fontStyle: FontStyle.italic,
                   ),
                 ),
-              const Spacer(),
-              Text(
-                _formatTime(entry.timestamp),
-                style: TextStyle(
-                  color: Colors.grey.shade500,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          
-          // Transcription text
-          Text(
-            entry.text,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurface,
-              fontSize: 16,
-              height: 1.4,
+              ],
             ),
           ),
-        ],
+        
+        const SizedBox(height: 12),
+        
+        // Divider
+        Container(
+          height: 1,
+          color: const Color(0xFF4A9FFF).withOpacity(0.3),
+        ),
+        
+        const SizedBox(height: 12),
+        
+        // Live caption text
+        Text(
+          _partialTranscription.isEmpty 
+            ? 'Listening...' 
+            : _partialTranscription,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
+            fontSize: 18,
+            fontStyle: _partialTranscription.isEmpty ? FontStyle.italic : FontStyle.normal,
+            height: 1.4,
+          ),
+        ),
+      ],
+    ),
+  ).animate().fadeIn(duration: 200.ms);
+}
+/// ✅ UPDATED: Build transcript bubble with speaker name above
+Widget _buildTranscriptBubble(TranscriptionEntry entry) {
+  // Determine speaker color based on confidence
+  final speakerColor = entry.confidence > 0.7 
+    ? const Color(0xFF4A9FFF)
+    : entry.confidence > 0.4
+      ? Colors.orange
+      : Colors.grey;
+  
+  return Container(
+    margin: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: Theme.of(context).cardTheme.color,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: speakerColor.withOpacity(0.3),
       ),
-    ).animate().fadeIn(duration: 300.ms).slideX(begin: -0.2, end: 0);
-  }
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ✅ Speaker badge - prominently displayed at top
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: speakerColor.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.person,
+                    color: speakerColor,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    entry.speakerName,
+                    style: TextStyle(
+                      color: speakerColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (entry.confidence > 0)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 6),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.3),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${(entry.confidence * 100).toStringAsFixed(0)}%',
+                          style: TextStyle(
+                            color: speakerColor,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const Spacer(),
+            Text(
+              _formatTime(entry.timestamp),
+              style: TextStyle(
+                color: Colors.grey.shade500,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+        
+        const SizedBox(height: 12),
+        
+        // Transcription text
+        Text(
+          entry.text,
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurface,
+            fontSize: 16,
+            height: 1.5,
+          ),
+        ),
+      ],
+    ),
+  ).animate().fadeIn(duration: 300.ms).slideX(begin: -0.2, end: 0);
+}
 
   Widget _buildListeningIndicator() {
     return Center(

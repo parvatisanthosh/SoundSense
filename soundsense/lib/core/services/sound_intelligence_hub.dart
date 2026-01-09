@@ -405,107 +405,105 @@ Future<void> _saveTrainingPreferences() async {
     debugPrint('👤 Speaker identification stopped');
   }
 
-  /// Identify current speaker
-  Future<void> _identifyCurrentSpeaker() async {
-    // Need at least 2 seconds of audio (16000 samples/sec * 2 bytes/sample * 2 seconds)
-    if (_speakerAudioBuffer.length < 16000 * 2 * 2) {
-      return;
-    }
+/// ✅ ENHANCED: Speaker identification with better debugging
+Future<void> _identifyCurrentSpeaker() async {
+  // Need at least 3 seconds of audio for good recognition
+  const minBufferSize = 16000 * 2 * 3; // 96,000 bytes
+  
+  debugPrint('🔍 Speaker buffer check: ${_speakerAudioBuffer.length} / $minBufferSize bytes');
+  
+  if (_speakerAudioBuffer.length < minBufferSize) {
+    debugPrint('⏳ Not enough audio for speaker ID yet...');
+    return;
+  }
 
-    final audioData = Uint8List.fromList(_speakerAudioBuffer);
-    _speakerAudioBuffer.clear();
+  // Take exactly 3 seconds
+  final audioData = Uint8List.fromList(_speakerAudioBuffer.take(minBufferSize).toList());
+  _speakerAudioBuffer.removeRange(0, minBufferSize);
 
-    try {
-      final result = await _speakerService.recognizeSpeaker(audioData);
+  debugPrint('🎙️ Attempting speaker recognition with ${audioData.length} bytes...');
 
-      if (result != null) {
-        final identified = result['identified'] ?? false;
-        final name = identified ? result['name'] : null;
-        final confidence = (result['confidence'] ?? 0.0).toDouble();
+  try {
+    final result = await _speakerService.recognizeSpeaker(audioData);
 
-        // Update current speaker
-        final previousSpeaker = _currentSpeakerName;
+    debugPrint('📊 Speaker recognition result: $result');
+
+    if (result != null) {
+      final rawConfidence = (result['confidence'] ?? 0.0).toDouble();
+      final name = result['name'];
+      final identified = result['identified'] == true;
+      
+      debugPrint('👤 Name: $name, Confidence: ${(rawConfidence * 100).toStringAsFixed(1)}%, Identified: $identified');
+      
+      final previousSpeaker = _currentSpeakerName;
+      
+      if (identified && name != null) {
         _currentSpeakerName = name;
-        _currentSpeakerConfidence = confidence;
-
-        // If speaker changed, emit event
+        _currentSpeakerConfidence = rawConfidence;
+        
+        debugPrint('✅ Speaker identified: $name (${(rawConfidence * 100).toStringAsFixed(1)}%)');
+        
+        // Only emit if speaker changed
         if (name != previousSpeaker) {
-          debugPrint('👤 Speaker: ${name ?? "Unknown"} (${(confidence * 100).toStringAsFixed(1)}%)');
-          
           _speakerEventController.add(SpeakerEvent(
             speakerName: name,
-            confidence: confidence,
+            confidence: rawConfidence,
             timestamp: DateTime.now(),
           ));
 
-          // Announce speaker change with TTS (if enabled)
-          if (_settings.ttsEnabled && name != null && confidence > 0.5) {
+          // Optional TTS announcement
+          if (_settings.ttsEnabled && rawConfidence > 0.75) {
             await _tts.speakAlert('$name is speaking', priority: 'normal');
           }
         }
+      } else {
+        debugPrint('❌ Not identified (confidence ${(rawConfidence * 100).toStringAsFixed(1)}% < 70%)');
+        
+        // Only clear if confidence was low
+        if (_currentSpeakerConfidence < 0.5) {
+          _currentSpeakerName = null;
+          _currentSpeakerConfidence = rawConfidence;
+        }
       }
-    } catch (e) {
-      debugPrint('❌ Speaker identification error: $e');
+    } else {
+      debugPrint('⚠️ Speaker recognition returned null');
     }
+  } catch (e) {
+    debugPrint('❌ Speaker recognition error: $e');
+    // Don't clear speaker on error
   }
+}
+
 
 // Copy the _processAudioData method and replace it in your sound_intelligence_hub.dart file
 
 /// Process audio data - MAIN PIPELINE
+/// ✅ FIXED: Process audio data - MAIN PIPELINE
 Future<void> _processAudioData(List<double> audioData) async {
+  // STEP 1: Add to sound detection buffer (for YAMNet)
   _audioBuffer.addAll(audioData);
   
-  // Debug log every 50000 samples
-  if (_audioBuffer.length % 50000 < audioData.length) {
-    debugPrint('🔍 Audio buffer: ${_audioBuffer.length} samples');
-    debugPrint('🔍 _isTranscribing=$_isTranscribing, _speechServiceReady=$_speechServiceReady');
-  }
-
-  // Add to speaker recognition buffer
+  // STEP 2: Add to speaker recognition buffer (for Pyannote)
   _addAudioForSpeakerIdentification(audioData);
 
-  // Send audio to Azure Speech Service for transcription
+  // STEP 3: Send audio to Azure Speech Service for transcription
   if (_isTranscribing && _speechServiceReady) {
     try {
       final audioBytes = _samplesToBytes(audioData);
-      debugPrint('🔍 Sending ${audioBytes.length} bytes to Azure'); // Log EVERY send
-      _speechService.sendAudioData(audioBytes);
-    } catch (e) {
-      debugPrint('⚠️ Error sending audio to speech service: $e');
-    }
-  } else {
-    // Log why we're NOT sending
-    if (_audioBuffer.length % 50000 < audioData.length) {
-      debugPrint('❌ NOT sending to Azure: transcribing=$_isTranscribing, ready=$_speechServiceReady');
-    }
-  }
-  
-  // Add to sound detection buffer
-  _audioBuffer.addAll(audioData);
-
-  // Add to speaker recognition buffer
-  _addAudioForSpeakerIdentification(audioData);
-
-  // Send audio to Azure Speech Service for transcription
-  if (_isTranscribing && _speechServiceReady) {
-    try {
-      final audioBytes = _samplesToBytes(audioData);
-      // Log every 50000 buffer size to avoid spam but still see activity
+      
+      // Log periodically to avoid spam
       if (_audioBuffer.length % 50000 < audioData.length) {
         debugPrint('🔍 Sending ${audioBytes.length} bytes to Azure (buffer: ${_audioBuffer.length})');
+        debugPrint('🔍 Speaker buffer: ${_speakerAudioBuffer.length} bytes');
       }
+      
       _speechService.sendAudioData(audioBytes);
     } catch (e) {
       debugPrint('⚠️ Error sending audio to speech service: $e');
     }
-  } else {
-    // Log why we're NOT sending
-    if (_audioBuffer.length % 100000 < audioData.length) {
-      debugPrint('🔍 NOT transcribing: _isTranscribing=$_isTranscribing, _speechServiceReady=$_speechServiceReady');
-    }
   }
 
-  // Need enough samples for YAMNet
+  // STEP 4: Check if we have enough samples for YAMNet (sound detection)
   if (_audioBuffer.length < _requiredSamples) {
     return;
   }
@@ -515,7 +513,7 @@ Future<void> _processAudioData(List<double> audioData) async {
 
   final audioBytes = _samplesToBytes(samples);
 
-  // STEP 1: Check custom sounds
+  // STEP 5: Check custom sounds
   final customMatch = await _customSounds.detectCustomSound(audioBytes);
   if (customMatch != null) {
     debugPrint('🎯 Custom sound detected: ${customMatch.displayName} (${customMatch.confidencePercent}%)');
@@ -523,36 +521,36 @@ Future<void> _processAudioData(List<double> audioData) async {
     return;
   }
 
-  // STEP 2: Check YAMNet
+  // STEP 6: Check YAMNet
   if (!_classifier.isReady) return;
 
   final yamnetResults = await _classifier.classify(samples);
   if (yamnetResults.isEmpty) return;
 
-  // STEP 3: Process YAMNet results
+  // STEP 7: Process YAMNet results
   for (var result in yamnetResults) {
     await _handleYAMNetDetection(result);
   }
 }
 
   /// Add audio for speaker identification
-  void _addAudioForSpeakerIdentification(List<double> audioData) {
-    // Convert double samples to int16 bytes
-    for (var sample in audioData) {
-      int intSample = (sample * 32768).round().clamp(-32768, 32767);
-      if (intSample < 0) intSample += 65536;
-      _speakerAudioBuffer.add(intSample & 0xFF);
-      _speakerAudioBuffer.add((intSample >> 8) & 0xFF);
-    }
-
-    // Keep only last 4 seconds
-    const maxBufferSize = 16000 * 2 * 4;
-    if (_speakerAudioBuffer.length > maxBufferSize) {
-      _speakerAudioBuffer = _speakerAudioBuffer.sublist(
-        _speakerAudioBuffer.length - maxBufferSize,
-      );
-    }
+void _addAudioForSpeakerIdentification(List<double> audioData) {
+  // Convert samples to bytes efficiently
+  for (var sample in audioData) {
+    int intSample = (sample * 32768).round().clamp(-32768, 32767);
+    if (intSample < 0) intSample += 65536;
+    _speakerAudioBuffer.add(intSample & 0xFF);
+    _speakerAudioBuffer.add((intSample >> 8) & 0xFF);
   }
+
+  // Keep only last 5 seconds
+  const maxBufferSize = 16000 * 2 * 5;
+  if (_speakerAudioBuffer.length > maxBufferSize) {
+    _speakerAudioBuffer = _speakerAudioBuffer.sublist(
+      _speakerAudioBuffer.length - maxBufferSize,
+    );
+  }
+}
 
   /// Handle custom sound detection
   Future<void> _handleCustomSoundDetection(CustomSoundMatch match) async {
