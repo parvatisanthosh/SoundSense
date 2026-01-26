@@ -53,38 +53,11 @@ An AI-powered accessibility app designed to help deaf and hard-of-hearing users 
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/parvatisanthosh/dhwani.git
-   cd dhwani
+   git clone https://github.com/parvatisanthosh/Dhwani.git
+   cd soundsense
    ```
 
-2. **Set up the Flutter app**
-   ```bash
-   cd app
-   flutter pub get
-   ```
-
-3. **Set up the Python backend**
-   ```bash
-   cd backend
-   pip install -r requirements.txt
-   ```
-
-4. **Configure environment variables**
-   ```bash
-   cp .env.example .env
-   # Add your Azure Speech Services key
-   ```
-
-5. **Run the backend**
-   ```bash
-   python app.py
-   ```
-
-6. **Run the Flutter app**
-   ```bash
-   cd app
-   flutter run
-   ```
+   
 
 ## How It Works
 
